@@ -7,6 +7,7 @@ export interface GameMatch {
   moneyEarned: number;
   won: boolean;
   timestamp: number;
+  pushed?: boolean;
 }
 
 export interface Brick {

@@ -933,6 +933,7 @@ export default function BlackjackScreen() {
       moneyEarned: playerWon ? totalWin : (isPush ? 0 : -totalBetAmount),
       won: playerWon,
       timestamp: Date.now(),
+      pushed: isPush,
     });
 
     setGamePhase('game_over');

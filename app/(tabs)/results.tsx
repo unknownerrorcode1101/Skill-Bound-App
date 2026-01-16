@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGame } from '@/contexts/GameContext';
-import { Trophy, XCircle, Coins, Clock, Gamepad2 } from 'lucide-react-native';
+import { Trophy, XCircle, Coins, Clock, Gamepad2, MinusCircle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect } from 'react';
 
@@ -154,14 +154,18 @@ export default function ResultsScreen() {
                   <Text style={styles.gameName} numberOfLines={1}>{match.gameName}</Text>
                   <View style={[
                     styles.resultBadge,
-                    match.won ? styles.winBadge : styles.lossBadge
+                    match.won ? styles.winBadge : match.pushed ? styles.pushBadge : styles.lossBadge
                   ]}>
                     {match.won ? (
                       <Trophy size={10} color="#fff" />
+                    ) : match.pushed ? (
+                      <MinusCircle size={10} color="#1e1e1e" />
                     ) : (
                       <XCircle size={10} color="#fff" />
                     )}
-                    <Text style={styles.badgeText}>{match.won ? 'WIN' : 'LOSS'}</Text>
+                    <Text style={[styles.badgeText, match.pushed && styles.pushBadgeText]}>
+                      {match.won ? 'WIN' : match.pushed ? 'PUSH' : 'LOSS'}
+                    </Text>
                   </View>
                 </View>
                 
@@ -394,11 +398,17 @@ const styles = StyleSheet.create({
   lossBadge: {
     backgroundColor: '#ef4444',
   },
+  pushBadge: {
+    backgroundColor: '#fbbf24',
+  },
   badgeText: {
     fontSize: 9,
     fontWeight: '800' as const,
     color: '#fff',
     letterSpacing: 0.3,
+  },
+  pushBadgeText: {
+    color: '#1e1e1e',
   },
   bottomRow: {
     flexDirection: 'row',
