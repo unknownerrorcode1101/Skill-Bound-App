@@ -275,12 +275,22 @@ const DraggableChip = ({
   const scale = useRef(new Animated.Value(1)).current;
   const [isDragging, setIsDragging] = useState(false);
   const dragDistance = useRef(0);
+  const dropZonesRef = useRef<DropZone[]>(dropZones);
+  const disabledRef = useRef(disabled);
+
+  useEffect(() => {
+    dropZonesRef.current = dropZones;
+  }, [dropZones]);
+
+  useEffect(() => {
+    disabledRef.current = disabled;
+  }, [disabled]);
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => !disabled,
+      onStartShouldSetPanResponder: () => !disabledRef.current,
       onMoveShouldSetPanResponder: (_, gesture) => {
-        return !disabled && (Math.abs(gesture.dx) > 5 || Math.abs(gesture.dy) > 5);
+        return !disabledRef.current && (Math.abs(gesture.dx) > 5 || Math.abs(gesture.dy) > 5);
       },
       onPanResponderGrant: () => {
         dragDistance.current = 0;
@@ -309,9 +319,10 @@ const DraggableChip = ({
         if (wasDragging) {
           const dropX = gesture.moveX;
           const dropY = gesture.moveY;
+          const currentDropZones = dropZonesRef.current;
 
           let droppedZone: DropZone | null = null;
-          for (const zone of dropZones) {
+          for (const zone of currentDropZones) {
             if (
               dropX >= zone.x &&
               dropX <= zone.x + zone.width &&
