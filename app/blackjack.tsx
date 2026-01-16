@@ -908,10 +908,16 @@ export default function BlackjackScreen() {
     const playerWon = totalWin > 0;
     const isPush = results.every(r => r.includes('Push'));
     
+    const formatWinAmount = (amount: number): string => {
+      if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M`;
+      if (amount >= 1000) return `${(amount / 1000).toFixed(1)}K`;
+      return `${amount}`;
+    };
+
     if (dealerBusted) {
-      setResultMessage(`Dealer Busts! ${totalWin > 0 ? `+${totalWin}` : ''}`);
+      setResultMessage(`Dealer Busts! ${totalWin > 0 ? `+${formatWinAmount(totalWin)}` : ''}`);
     } else if (totalWin > 0) {
-      setResultMessage(`You Win ${totalWin}!`);
+      setResultMessage(`You Win ${formatWinAmount(totalWin)}!`);
     } else if (isPush) {
       setResultMessage('Push!');
     } else {
