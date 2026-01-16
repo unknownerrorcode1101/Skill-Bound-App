@@ -188,7 +188,7 @@ export default function BallBlasterSurvival() {
     for (let i = 0; i < count; i++) {
       const angle = (Math.PI * 2 * i) / count;
       newParticles.push({
-        id: `particle-${Date.now()}-${i}`,
+        id: `particle-${Date.now()}-${Math.random()}-${i}`,
         x,
         y,
         velocityX: Math.cos(angle) * (2 + Math.random() * 2),
