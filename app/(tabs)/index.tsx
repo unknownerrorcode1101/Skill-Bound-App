@@ -551,8 +551,8 @@ const styles = StyleSheet.create({
   currencyRow: {
     flex: 1,
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 16,
+    justifyContent: 'center',
+    gap: 10,
   },
   currencyItem: {
     flexDirection: 'row',
