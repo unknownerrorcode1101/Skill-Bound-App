@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Gamepad2, Trophy, ShoppingBag, Gift } from "lucide-react-native";
+import { Gamepad2, Trophy, ShoppingBag, Gift, ClipboardList } from "lucide-react-native";
 import { View, StyleSheet } from "react-native";
 import React from "react";
 
@@ -53,6 +53,13 @@ export default function TabLayout() {
         options={{
           title: "REWARDS",
           tabBarIcon: ({ color, size }) => <Gift color={color} size={size - 2} />,
+        }}
+      />
+      <Tabs.Screen
+        name="results"
+        options={{
+          title: "RESULTS",
+          tabBarIcon: ({ color, size }) => <ClipboardList color={color} size={size - 2} />,
         }}
       />
       <Tabs.Screen
