@@ -6,10 +6,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect } from 'react';
 
 const GAME_IMAGES: Record<string, string> = {
-  'Blackjack': 'https://images.unsplash.com/photo-1511193311914-0346f16efe90?w=400&h=300&fit=crop',
-  'Ball Blast': 'https://images.unsplash.com/photo-1614294149010-950b698f72c0?w=400&h=300&fit=crop',
-  'Ball Blaster Survival': 'https://images.unsplash.com/photo-1614294149010-950b698f72c0?w=400&h=300&fit=crop',
-  'default': 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&h=300&fit=crop',
+  'Blackjack': 'https://images.unsplash.com/photo-1511193311914-0346f16efe90?w=100&h=100&fit=crop',
+  'Ball Blast': 'https://images.unsplash.com/photo-1614294149010-950b698f72c0?w=100&h=100&fit=crop',
+  'Ball Blaster Survival': 'https://images.unsplash.com/photo-1614294149010-950b698f72c0?w=100&h=100&fit=crop',
+  'default': 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=100&h=100&fit=crop',
+};
+
+const formatMoney = (amount: number): string => {
+  const rounded = Math.floor(amount * 100) / 100;
+  return rounded.toFixed(2);
 };
 
 const formatTimeAgo = (timestamp: number): string => {
@@ -72,54 +77,37 @@ export default function ResultsScreen() {
                 source={{ uri: getGameImage(match.gameName) }}
                 style={styles.gameImage}
               />
-              <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.8)']}
-                style={styles.imageOverlay}
-              />
               
-              <View style={styles.resultBadge}>
-                {match.won ? (
-                  <LinearGradient
-                    colors={['#22c55e', '#16a34a']}
-                    style={styles.badgeGradient}
-                  >
-                    <Trophy size={14} color="#fff" />
-                    <Text style={styles.badgeText}>WIN</Text>
-                  </LinearGradient>
-                ) : (
-                  <LinearGradient
-                    colors={['#ef4444', '#dc2626']}
-                    style={styles.badgeGradient}
-                  >
-                    <XCircle size={14} color="#fff" />
-                    <Text style={styles.badgeText}>LOSS</Text>
-                  </LinearGradient>
-                )}
-              </View>
-
               <View style={styles.cardContent}>
-                <Text style={styles.gameName}>{match.gameName}</Text>
-                <Text style={styles.gameMode}>{match.gameMode}</Text>
+                <View style={styles.topRow}>
+                  <Text style={styles.gameName} numberOfLines={1}>{match.gameName}</Text>
+                  <View style={[
+                    styles.resultBadge,
+                    match.won ? styles.winBadge : styles.lossBadge
+                  ]}>
+                    {match.won ? (
+                      <Trophy size={10} color="#fff" />
+                    ) : (
+                      <XCircle size={10} color="#fff" />
+                    )}
+                    <Text style={styles.badgeText}>{match.won ? 'WIN' : 'LOSS'}</Text>
+                  </View>
+                </View>
                 
-                <View style={styles.statsRow}>
-                  <View style={styles.statItem}>
-                    <Coins size={16} color="#fbbf24" />
-                    <Text style={[
-                      styles.statValue,
-                      match.moneyEarned > 0 ? styles.statValuePositive : styles.statValueNegative
-                    ]}>
-                      {match.moneyEarned > 0 ? `+$${match.moneyEarned}` : '$0'}
-                    </Text>
-                  </View>
-                  
-                  <View style={styles.statItem}>
-                    <Trophy size={16} color="#60a5fa" />
-                    <Text style={styles.statValue}>#{match.placement}</Text>
-                  </View>
-                  
-                  <View style={styles.statItem}>
-                    <Clock size={16} color="#94a3b8" />
+                <View style={styles.bottomRow}>
+                  <View style={styles.timeRow}>
+                    <Clock size={12} color="#64748b" />
                     <Text style={styles.timeText}>{formatTimeAgo(match.timestamp)}</Text>
+                  </View>
+                  
+                  <View style={styles.moneyRow}>
+                    <Coins size={14} color="#fbbf24" />
+                    <Text style={[
+                      styles.moneyText,
+                      match.won ? styles.moneyPositive : styles.moneyNegative
+                    ]}>
+                      {match.won ? '+' : ''}${formatMoney(match.moneyEarned)}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -185,83 +173,88 @@ const styles = StyleSheet.create({
   },
   resultCard: {
     backgroundColor: '#1e293b',
-    borderRadius: 16,
-    marginBottom: 16,
+    borderRadius: 10,
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(96, 165, 250, 0.2)',
+    borderColor: 'rgba(96, 165, 250, 0.15)',
   },
   gameImage: {
-    width: '100%',
-    height: 140,
+    width: 56,
+    height: 56,
+    borderRadius: 8,
+    margin: 10,
     backgroundColor: '#0f172a',
   },
-  imageOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 140,
+  cardContent: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingRight: 12,
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  gameName: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: '#fff',
+    flex: 1,
+    marginRight: 8,
   },
   resultBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    borderRadius: 8,
-    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 4,
   },
-  badgeGradient: {
+  winBadge: {
+    backgroundColor: '#22c55e',
+  },
+  lossBadge: {
+    backgroundColor: '#ef4444',
+  },
+  badgeText: {
+    fontSize: 9,
+    fontWeight: '800' as const,
+    color: '#fff',
+    letterSpacing: 0.3,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  timeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '800' as const,
-    color: '#fff',
-    letterSpacing: 0.5,
-  },
-  cardContent: {
-    padding: 16,
-  },
-  gameName: {
-    fontSize: 20,
-    fontWeight: '800' as const,
-    color: '#fff',
-    marginBottom: 2,
-  },
-  gameMode: {
-    fontSize: 13,
-    color: '#94a3b8',
-    marginBottom: 12,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  statValue: {
-    fontSize: 14,
-    fontWeight: '700' as const,
-    color: '#fff',
-  },
-  statValuePositive: {
-    color: '#22c55e',
-  },
-  statValueNegative: {
-    color: '#94a3b8',
   },
   timeText: {
-    fontSize: 13,
+    fontSize: 11,
     color: '#64748b',
-    fontWeight: '600' as const,
+    fontWeight: '500' as const,
+  },
+  moneyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  moneyText: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+  },
+  moneyPositive: {
+    color: '#22c55e',
+  },
+  moneyNegative: {
+    color: '#94a3b8',
   },
   footerSpace: {
     height: 100,
