@@ -33,6 +33,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="leaderboard"
+        options={{
+          title: "RANKS",
+          tabBarIcon: ({ color, size }) => <Trophy color={color} size={size - 2} />,
+        }}
+      />
+      <Tabs.Screen
         name="index"
         options={{
           title: "PLAY",
@@ -53,13 +60,6 @@ export default function TabLayout() {
         options={{
           title: "REWARDS",
           tabBarIcon: ({ color, size }) => <Gift color={color} size={size - 2} />,
-        }}
-      />
-      <Tabs.Screen
-        name="leaderboard"
-        options={{
-          title: "RANKS",
-          tabBarIcon: ({ color, size }) => <Trophy color={color} size={size - 2} />,
         }}
       />
       <Tabs.Screen
