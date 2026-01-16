@@ -1,15 +1,83 @@
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGame } from '@/contexts/GameContext';
 import { Trophy, XCircle, Coins, Clock, Gamepad2 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect } from 'react';
 
-const GAME_IMAGES: Record<string, string> = {
-  'Blackjack': 'https://images.unsplash.com/photo-1511193311914-0346f16efe90?w=100&h=100&fit=crop',
-  'Ball Blast': 'https://images.unsplash.com/photo-1614294149010-950b698f72c0?w=100&h=100&fit=crop',
-  'Ball Blaster Survival': 'https://images.unsplash.com/photo-1614294149010-950b698f72c0?w=100&h=100&fit=crop',
-  'default': 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=100&h=100&fit=crop',
+const BrickBreakerPreview = () => (
+  <LinearGradient colors={['#1e1b4b', '#312e81', '#1e1b4b']} style={styles.gameImagePreview}>
+    <View style={styles.miniBricksContainer}>
+      <View style={styles.miniBrickRow}>
+        <View style={[styles.miniBrick, { backgroundColor: '#ef4444' }]} />
+        <View style={[styles.miniBrick, { backgroundColor: '#f97316' }]} />
+        <View style={[styles.miniBrick, { backgroundColor: '#eab308' }]} />
+      </View>
+      <View style={styles.miniBrickRow}>
+        <View style={[styles.miniBrick, { backgroundColor: '#22c55e' }]} />
+        <View style={[styles.miniBrick, { backgroundColor: '#3b82f6' }]} />
+        <View style={[styles.miniBrick, { backgroundColor: '#a855f7' }]} />
+      </View>
+    </View>
+    <View style={styles.miniBall} />
+    <View style={styles.miniPaddle} />
+  </LinearGradient>
+);
+
+const BallBlasterPreview = () => (
+  <LinearGradient colors={['#0a0a0f', '#151520', '#0a0a0f']} style={styles.gameImagePreview}>
+    <View style={styles.miniRocksContainer}>
+      <View style={[styles.miniRock, { backgroundColor: '#ef4444', left: 6 }]}>
+        <Text style={styles.miniRockText}>5</Text>
+      </View>
+      <View style={[styles.miniRock, { backgroundColor: '#3b82f6', left: 24, top: 8 }]}>
+        <Text style={styles.miniRockText}>3</Text>
+      </View>
+      <View style={[styles.miniRock, { backgroundColor: '#22c55e', left: 40, top: 2 }]}>
+        <Text style={styles.miniRockText}>7</Text>
+      </View>
+    </View>
+    <View style={styles.miniBlaster}>
+      <View style={styles.miniBlasterCannon} />
+      <View style={styles.miniBlasterBody} />
+    </View>
+  </LinearGradient>
+);
+
+const BlackjackPreview = () => (
+  <LinearGradient colors={['#0d3320', '#145a32', '#0d3320']} style={styles.gameImagePreview}>
+    <View style={styles.miniCardsContainer}>
+      <View style={[styles.miniCard, { backgroundColor: '#1e40af' }]} />
+      <View style={[styles.miniCard, { backgroundColor: '#fff', marginLeft: -4 }]}>
+        <Text style={styles.miniCardText}>A</Text>
+      </View>
+    </View>
+    <View style={styles.miniChipStack}>
+      <View style={[styles.miniChip, { backgroundColor: '#ef4444' }]} />
+      <View style={[styles.miniChip, { backgroundColor: '#22c55e', marginTop: -4 }]} />
+    </View>
+  </LinearGradient>
+);
+
+const DefaultGamePreview = () => (
+  <LinearGradient colors={['#1a1a2e', '#16213e', '#1a1a2e']} style={styles.gameImagePreview}>
+    <Gamepad2 size={24} color="#475569" />
+  </LinearGradient>
+);
+
+const getGamePreview = (gameName: string) => {
+  switch (gameName) {
+    case 'Ball Blast':
+    case 'Brick Breaker':
+      return <BrickBreakerPreview />;
+    case 'Ball Blaster Survival':
+    case 'Ball Blaster':
+      return <BallBlasterPreview />;
+    case 'Blackjack':
+      return <BlackjackPreview />;
+    default:
+      return <DefaultGamePreview />;
+  }
 };
 
 const formatMoney = (amount: number): string => {
@@ -40,9 +108,7 @@ export default function ResultsScreen() {
     loadMatches();
   }, [loadMatches]);
 
-  const getGameImage = (gameName: string): string => {
-    return GAME_IMAGES[gameName] || GAME_IMAGES['default'];
-  };
+
 
   return (
     <View style={styles.container}>
@@ -73,10 +139,9 @@ export default function ResultsScreen() {
         ) : (
           matches.map((match) => (
             <View key={match.id} style={styles.resultCard}>
-              <Image 
-                source={{ uri: getGameImage(match.gameName) }}
-                style={styles.gameImage}
-              />
+              <View style={styles.gameImageWrapper}>
+                {getGamePreview(match.gameName)}
+              </View>
               
               <View style={styles.cardContent}>
                 <View style={styles.topRow}>
@@ -181,12 +246,115 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(96, 165, 250, 0.15)',
   },
-  gameImage: {
+  gameImageWrapper: {
     width: 56,
     height: 56,
     borderRadius: 8,
     margin: 10,
-    backgroundColor: '#0f172a',
+    overflow: 'hidden',
+  },
+  gameImagePreview: {
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  miniBricksContainer: {
+    position: 'absolute',
+    top: 6,
+    gap: 2,
+  },
+  miniBrickRow: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  miniBrick: {
+    width: 14,
+    height: 6,
+    borderRadius: 1,
+  },
+  miniBall: {
+    position: 'absolute',
+    bottom: 16,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#fff',
+  },
+  miniPaddle: {
+    position: 'absolute',
+    bottom: 6,
+    width: 24,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#22d3ee',
+  },
+  miniRocksContainer: {
+    position: 'absolute',
+    top: 6,
+    width: '100%',
+    height: 24,
+  },
+  miniRock: {
+    position: 'absolute',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  miniRockText: {
+    color: '#fff',
+    fontSize: 7,
+    fontWeight: '900' as const,
+  },
+  miniBlaster: {
+    position: 'absolute',
+    bottom: 6,
+    alignItems: 'center',
+  },
+  miniBlasterCannon: {
+    width: 4,
+    height: 8,
+    backgroundColor: '#60a5fa',
+    borderRadius: 2,
+    marginBottom: -1,
+  },
+  miniBlasterBody: {
+    width: 20,
+    height: 8,
+    backgroundColor: '#3b82f6',
+    borderRadius: 3,
+  },
+  miniCardsContainer: {
+    position: 'absolute',
+    top: 8,
+    flexDirection: 'row',
+  },
+  miniCard: {
+    width: 14,
+    height: 20,
+    borderRadius: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  miniCardText: {
+    fontSize: 8,
+    fontWeight: '800' as const,
+    color: '#1e1e1e',
+  },
+  miniChipStack: {
+    position: 'absolute',
+    bottom: 8,
+    alignItems: 'center',
+  },
+  miniChip: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   cardContent: {
     flex: 1,
