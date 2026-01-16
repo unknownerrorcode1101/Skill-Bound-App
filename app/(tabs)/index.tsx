@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
     gap: 2,
     borderWidth: 1,
     borderColor: 'rgba(34, 197, 94, 0.3)',
-    width: 88,
+    minWidth: 95,
   },
   currencyValueContainer: {
     flex: 1,

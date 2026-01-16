@@ -970,9 +970,15 @@ export default function BlackjackScreen() {
     playerHands.length < 4;
 
   const formatMoney = (amount: number): string => {
-    if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
-    if (amount >= 1000) return `$${(amount / 1000).toFixed(1)}K`;
-    return `$${amount}`;
+    if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M`;
+    if (amount >= 1000) return `${(amount / 1000).toFixed(1)}K`;
+    return `${amount.toFixed(0)}`;
+  };
+
+  const formatBetAmount = (amount: number): string => {
+    if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M`;
+    if (amount >= 1000) return `${(amount / 1000).toFixed(1)}K`;
+    return `${amount.toLocaleString()}`;
   };
 
   return (
@@ -1034,14 +1040,14 @@ export default function BlackjackScreen() {
             {sideBetResults.perfectPairs.won && (
               <View style={styles.sideBetResultBadge}>
                 <Text style={styles.sideBetResultText}>
-                  {sideBetResults.perfectPairs.type}! +${sideBetResults.perfectPairs.payout}
+                  {sideBetResults.perfectPairs.type}! +{formatBetAmount(sideBetResults.perfectPairs.payout)}
                 </Text>
               </View>
             )}
             {sideBetResults.twentyOnePlus3.won && (
               <View style={styles.sideBetResultBadge}>
                 <Text style={styles.sideBetResultText}>
-                  {sideBetResults.twentyOnePlus3.type}! +${sideBetResults.twentyOnePlus3.payout}
+                  {sideBetResults.twentyOnePlus3.type}! +{formatBetAmount(sideBetResults.twentyOnePlus3.payout)}
                 </Text>
               </View>
             )}
@@ -1096,7 +1102,7 @@ export default function BlackjackScreen() {
                 </Text>
               </View>
               {playerHands.length > 1 && (
-                <Text style={styles.handBetText}>${hand.bet}</Text>
+                <Text style={styles.handBetText}>{formatBetAmount(hand.bet)}</Text>
               )}
             </View>
           ))}
@@ -1120,7 +1126,7 @@ export default function BlackjackScreen() {
                     onPress={() => perfectPairsBet > 0 && setPerfectPairsBet(0)}
                   >
                     {perfectPairsBet > 0 && (
-                      <Text style={styles.sideBetAmount}>${perfectPairsBet.toLocaleString()}</Text>
+                      <Text style={styles.sideBetAmount}>{formatBetAmount(perfectPairsBet)}</Text>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -1135,7 +1141,7 @@ export default function BlackjackScreen() {
                   collapsable={false}
                 >
                   {currentBet > 0 && (
-                    <Text style={styles.mainBetAmount}>${currentBet.toLocaleString()}</Text>
+                    <Text style={styles.mainBetAmount}>{formatBetAmount(currentBet)}</Text>
                   )}
                 </View>
               </View>
@@ -1152,7 +1158,7 @@ export default function BlackjackScreen() {
                     onPress={() => twentyOnePlus3Bet > 0 && setTwentyOnePlus3Bet(0)}
                   >
                     {twentyOnePlus3Bet > 0 && (
-                      <Text style={styles.sideBetAmount}>${twentyOnePlus3Bet.toLocaleString()}</Text>
+                      <Text style={styles.sideBetAmount}>{formatBetAmount(twentyOnePlus3Bet)}</Text>
                     )}
                   </TouchableOpacity>
                 </View>
