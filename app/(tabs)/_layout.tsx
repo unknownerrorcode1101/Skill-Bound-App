@@ -26,10 +26,10 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="leaderboard"
+        name="results"
         options={{
-          title: "RANKS",
-          tabBarIcon: ({ color, size }) => <Trophy color={color} size={size - 2} />,
+          title: "RESULTS",
+          tabBarIcon: ({ color, size }) => <ClipboardList color={color} size={size - 2} />,
         }}
       />
       <Tabs.Screen
@@ -56,10 +56,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="results"
+        name="leaderboard"
         options={{
-          title: "RESULTS",
-          tabBarIcon: ({ color, size }) => <ClipboardList color={color} size={size - 2} />,
+          title: "RANKS",
+          tabBarIcon: ({ color, size }) => <Trophy color={color} size={size - 2} />,
         }}
       />
       <Tabs.Screen
