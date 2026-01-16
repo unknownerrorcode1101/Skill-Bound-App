@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 16,
     gap: 4,
-    minWidth: 95,
+    minWidth: 110,
   },
   currencyItemGreen: {
     flexDirection: 'row',
@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
     gap: 2,
     borderWidth: 1,
     borderColor: 'rgba(34, 197, 94, 0.3)',
-    minWidth: 95,
+    minWidth: 110,
   },
   currencyValueContainer: {
     flex: 1,
