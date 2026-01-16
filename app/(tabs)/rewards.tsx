@@ -259,7 +259,7 @@ export default function RewardsScreen() {
       
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.titleRow}>
-          <Gift size={26} color="#fbbf24" />
+          <Gift size={24} color="#fbbf24" />
           <Text style={styles.title}>Rewards</Text>
         </View>
         
@@ -567,17 +567,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a2744',
   },
   header: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 12,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     marginBottom: 12,
   },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '900' as const,
     color: '#fff',
     letterSpacing: 1,
@@ -595,7 +595,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 8,
   },
   tabActive: {
     backgroundColor: 'rgba(251, 191, 36, 0.15)',
@@ -649,14 +649,15 @@ const styles = StyleSheet.create({
   rewardCard: {
     width: (SCREEN_WIDTH - 56) / 4,
     backgroundColor: 'rgba(30, 41, 59, 0.8)',
-    borderRadius: 10,
+    borderRadius: 8,
     padding: 8,
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: 'rgba(96, 165, 250, 0.2)',
   },
   rewardCardActive: {
     borderColor: '#fbbf24',
+    borderWidth: 2,
     backgroundColor: 'rgba(251, 191, 36, 0.15)',
     shadowColor: '#fbbf24',
     shadowOffset: { width: 0, height: 0 },
@@ -734,7 +735,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   claimButton: {
-    borderRadius: 14,
+    borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -771,7 +772,7 @@ const styles = StyleSheet.create({
   },
   rewardPopup: {
     marginTop: 16,
-    borderRadius: 14,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   rewardPopupGradient: {
@@ -779,7 +780,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(96, 165, 250, 0.3)',
-    borderRadius: 14,
+    borderRadius: 12,
   },
   rewardPopupTitle: {
     fontSize: 18,
@@ -906,7 +907,7 @@ const styles = StyleSheet.create({
   },
   spinButton: {
     marginTop: 12,
-    borderRadius: 14,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   spinButtonDisabled: {
@@ -930,7 +931,7 @@ const styles = StyleSheet.create({
   },
   spinResultContainer: {
     marginTop: 12,
-    borderRadius: 14,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   spinResultGradient: {
@@ -938,7 +939,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(251, 191, 36, 0.4)',
-    borderRadius: 14,
+    borderRadius: 12,
   },
   spinResultTitle: {
     fontSize: 18,

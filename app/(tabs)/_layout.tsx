@@ -14,7 +14,7 @@ export default function TabLayout() {
           borderTopWidth: 1,
           height: 85,
           paddingBottom: 20,
-          paddingTop: 8,
+          paddingTop: 10,
         },
         tabBarActiveTintColor: '#60a5fa',
         tabBarInactiveTintColor: '#5a6f8a',
@@ -29,23 +29,23 @@ export default function TabLayout() {
         name="results"
         options={{
           title: "RESULTS",
-          tabBarIcon: ({ color, size }) => <ClipboardList color={color} size={size - 2} />,
+          tabBarIcon: ({ color, size }) => <ClipboardList color={color} size={22} />,
         }}
       />
       <Tabs.Screen
         name="leaderboard"
         options={{
           title: "RANKS",
-          tabBarIcon: ({ color, size }) => <Trophy color={color} size={size - 2} />,
+          tabBarIcon: ({ color, size }) => <Trophy color={color} size={22} />,
         }}
       />
       <Tabs.Screen
         name="index"
         options={{
           title: "PLAY",
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({ color, focused }) => (
             <View style={[styles.playIconContainer, focused && styles.playIconActive]}>
-              <Gamepad2 color={focused ? '#fff' : color} size={size + 4} />
+              <Gamepad2 color={focused ? '#fff' : color} size={26} />
             </View>
           ),
           tabBarLabelStyle: {
@@ -59,14 +59,14 @@ export default function TabLayout() {
         name="rewards"
         options={{
           title: "REWARDS",
-          tabBarIcon: ({ color, size }) => <Gift color={color} size={size - 2} />,
+          tabBarIcon: ({ color, size }) => <Gift color={color} size={22} />,
         }}
       />
       <Tabs.Screen
         name="store"
         options={{
           title: "STORE",
-          tabBarIcon: ({ color, size }) => <ShoppingBag color={color} size={size - 2} />,
+          tabBarIcon: ({ color, size }) => <ShoppingBag color={color} size={22} />,
         }}
       />
     </Tabs>
@@ -75,13 +75,13 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   playIconContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: 'rgba(96, 165, 250, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: -4,
+    marginTop: -8,
   },
   playIconActive: {
     backgroundColor: '#3b82f6',

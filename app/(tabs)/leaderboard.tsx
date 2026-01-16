@@ -92,7 +92,7 @@ export default function LeaderboardScreen() {
       
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.titleRow}>
-          <Trophy size={26} color="#fbbf24" />
+          <Trophy size={24} color="#fbbf24" />
           <Text style={styles.title}>Leaderboard</Text>
         </View>
         <Text style={styles.subtitle}>Compete for the top spot!</Text>
@@ -192,16 +192,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a2744',
   },
   header: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 12,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '900' as const,
     color: '#fff',
     letterSpacing: 1,
@@ -223,9 +223,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'flex-end',
-    paddingTop: 20,
-    paddingBottom: 24,
-    gap: 8,
+    paddingTop: 16,
+    paddingBottom: 20,
+    gap: 10,
   },
   topThreeItem: {
     alignItems: 'center',
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     backgroundColor: 'rgba(30, 41, 59, 0.5)',
-    borderRadius: 16,
+    borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(71, 85, 105, 0.3)',
@@ -313,8 +313,8 @@ const styles = StyleSheet.create({
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(71, 85, 105, 0.2)',
   },
@@ -351,9 +351,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     backgroundColor: 'rgba(251, 191, 36, 0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
   listCrownsText: {
     fontSize: 14,
@@ -363,11 +363,11 @@ const styles = StyleSheet.create({
   infoBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginTop: 20,
+    gap: 10,
+    marginTop: 16,
     backgroundColor: 'rgba(30, 41, 59, 0.6)',
     borderRadius: 12,
-    padding: 14,
+    padding: 12,
     borderWidth: 1,
     borderColor: 'rgba(251, 191, 36, 0.2)',
   },

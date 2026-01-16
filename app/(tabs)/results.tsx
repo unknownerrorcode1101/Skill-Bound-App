@@ -125,7 +125,7 @@ export default function ResultsScreen() {
       
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.titleRow}>
-          <Trophy size={26} color="#fbbf24" />
+          <Trophy size={24} color="#fbbf24" />
           <Text style={styles.title}>Results</Text>
         </View>
         <Text style={styles.subtitle}>Your game history</Text>
@@ -202,32 +202,32 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a2744',
   },
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '900' as const,
     color: '#fff',
     letterSpacing: 1,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#94a3b8',
-    marginTop: 4,
-    marginLeft: 36,
+    marginTop: 2,
+    marginLeft: 32,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingTop: 4,
   },
   emptyState: {
     alignItems: 'center',
@@ -248,8 +248,8 @@ const styles = StyleSheet.create({
   },
   resultCard: {
     backgroundColor: '#1e293b',
-    borderRadius: 10,
-    marginBottom: 8,
+    borderRadius: 12,
+    marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
     overflow: 'hidden',
@@ -257,15 +257,16 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(96, 165, 250, 0.15)',
   },
   gameImageWrapper: {
-    width: 56,
-    height: 56,
+    width: 52,
+    height: 52,
     borderRadius: 8,
-    margin: 10,
+    marginLeft: 10,
+    marginVertical: 10,
     overflow: 'hidden',
   },
   gameImagePreview: {
-    width: 56,
-    height: 56,
+    width: 52,
+    height: 52,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -369,16 +370,16 @@ const styles = StyleSheet.create({
   cardContent: {
     flex: 1,
     paddingVertical: 10,
-    paddingRight: 12,
+    paddingHorizontal: 10,
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   gameName: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700' as const,
     color: '#fff',
     flex: 1,
@@ -387,10 +388,12 @@ const styles = StyleSheet.create({
   resultBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 3,
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderRadius: 4,
+    minWidth: 48,
   },
   winBadge: {
     backgroundColor: '#22c55e',
@@ -405,7 +408,7 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '800' as const,
     color: '#fff',
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
   },
   pushBadgeText: {
     color: '#1e1e1e',
@@ -423,7 +426,7 @@ const styles = StyleSheet.create({
   timeText: {
     fontSize: 11,
     color: '#64748b',
-    fontWeight: '500' as const,
+    fontWeight: '600' as const,
   },
   moneyRow: {
     flexDirection: 'row',
@@ -431,7 +434,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   moneyText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700' as const,
   },
   moneyPositive: {
