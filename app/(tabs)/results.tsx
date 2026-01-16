@@ -81,6 +81,12 @@ const getGamePreview = (gameName: string) => {
 };
 
 const formatMoney = (amount: number): string => {
+  const absAmount = Math.abs(amount);
+  if (absAmount >= 1000000) {
+    return (amount / 1000000).toFixed(1) + 'M';
+  } else if (absAmount >= 1000) {
+    return (amount / 1000).toFixed(1) + 'K';
+  }
   const rounded = Math.floor(amount * 100) / 100;
   return rounded.toFixed(2);
 };
