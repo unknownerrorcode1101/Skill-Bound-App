@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { GameMatch } from '@/types/game';
@@ -156,6 +156,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
     }
   }, []);
 
+  const pendingLevelUp = useRef<{ oldLevel: number; newLevel: number } | null>(null);
+
   const addXp = useCallback((won: boolean) => {
     const xpGain = won ? XP_WIN : XP_LOSE;
     setXp(prev => {
@@ -169,26 +171,35 @@ export const [GameProvider, useGame] = createContextHook(() => {
       
       if (updatedLevel > oldLevel) {
         console.log('Level up detected! Old:', oldLevel, 'New:', updatedLevel);
-        setNewLevel(updatedLevel);
-        setShowLevelUp(true);
-        previousLevelRef.current = updatedLevel;
-        
-        setGems(prevGems => {
-          const newGems = prevGems + LEVEL_UP_GEM_REWARD;
-          AsyncStorage.setItem(GEMS_KEY, JSON.stringify(newGems)).catch(error => {
-            console.log('Error saving gems:', error);
-          });
-          return newGems;
-        });
-        
-        AsyncStorage.setItem(LEVEL_KEY, JSON.stringify(updatedLevel)).catch(error => {
-          console.log('Error saving level:', error);
-        });
+        pendingLevelUp.current = { oldLevel, newLevel: updatedLevel };
       }
       
       return newXp;
     });
   }, []);
+
+  useEffect(() => {
+    if (pendingLevelUp.current) {
+      const { newLevel: updatedLevel } = pendingLevelUp.current;
+      pendingLevelUp.current = null;
+      
+      setNewLevel(updatedLevel);
+      setShowLevelUp(true);
+      previousLevelRef.current = updatedLevel;
+      
+      setGems(prevGems => {
+        const newGems = prevGems + LEVEL_UP_GEM_REWARD;
+        AsyncStorage.setItem(GEMS_KEY, JSON.stringify(newGems)).catch(error => {
+          console.log('Error saving gems:', error);
+        });
+        return newGems;
+      });
+      
+      AsyncStorage.setItem(LEVEL_KEY, JSON.stringify(updatedLevel)).catch(error => {
+        console.log('Error saving level:', error);
+      });
+    }
+  }, [xp]);
 
   const loadMatches = useCallback(async () => {
     try {
