@@ -382,7 +382,7 @@ const DraggableChip = ({
 
 export default function BlackjackScreen() {
   const insets = useSafeAreaInsets();
-  const { money, spendMoney, addMoney, addCrowns } = useGame();
+  const { money, spendMoney, addMoney, addCrowns, saveMatch } = useGame();
 
   const [shoe, setShoe] = useState<Card[]>(() => createShoe());
   const [playerHands, setPlayerHands] = useState<Hand[]>([]);
@@ -631,8 +631,28 @@ export default function BlackjackScreen() {
         if (playerHasBlackjack) {
           setResultMessage('Push - Both Blackjack!');
           addMoney(currentBet);
+          saveMatch({
+            id: `blackjack-${Date.now()}`,
+            gameName: 'Blackjack',
+            gameMode: 'Standard',
+            placement: 1,
+            timeAgo: 'Just now',
+            moneyEarned: 0,
+            won: false,
+            timestamp: Date.now(),
+          });
         } else {
           setResultMessage('Dealer Blackjack!');
+          saveMatch({
+            id: `blackjack-${Date.now()}`,
+            gameName: 'Blackjack',
+            gameMode: 'Standard',
+            placement: 2,
+            timeAgo: 'Just now',
+            moneyEarned: -currentBet,
+            won: false,
+            timestamp: Date.now(),
+          });
         }
         setGamePhase('game_over');
         return;
@@ -646,12 +666,22 @@ export default function BlackjackScreen() {
       addMoney(blackjackPayout);
       setTotalWinnings(blackjackPayout - currentBet);
       setResultMessage('Blackjack! 3:2 Payout!');
+      saveMatch({
+        id: `blackjack-${Date.now()}`,
+        gameName: 'Blackjack',
+        gameMode: 'Standard',
+        placement: 1,
+        timeAgo: 'Just now',
+        moneyEarned: blackjackPayout - currentBet,
+        won: true,
+        timestamp: Date.now(),
+      });
       setGamePhase('game_over');
       return;
     }
 
     setGamePhase('player_turn');
-  }, [currentBet, perfectPairsBet, twentyOnePlus3Bet, shoe, spendMoney, addMoney, triggerHaptic]);
+  }, [currentBet, perfectPairsBet, twentyOnePlus3Bet, shoe, spendMoney, addMoney, triggerHaptic, saveMatch]);
 
   const hit = useCallback(() => {
     triggerHaptic();
@@ -776,13 +806,24 @@ export default function BlackjackScreen() {
         if (allBusted) {
           setDealerCards(prev => prev.map(c => ({ ...c, faceUp: true })));
           setResultMessage('Busted!');
+          const totalLost = playerHands.reduce((sum, h) => sum + h.bet, 0);
+          saveMatch({
+            id: `blackjack-${Date.now()}`,
+            gameName: 'Blackjack',
+            gameMode: 'Standard',
+            placement: 2,
+            timeAgo: 'Just now',
+            moneyEarned: -totalLost,
+            won: false,
+            timestamp: Date.now(),
+          });
           setGamePhase('game_over');
         } else {
           setGamePhase('dealer_turn');
         }
       }
     }
-  }, [playerHands, currentHandIndex, gamePhase]);
+  }, [playerHands, currentHandIndex, gamePhase, saveMatch]);
 
   useEffect(() => {
     if (gamePhase !== 'dealer_turn') return;
@@ -862,15 +903,31 @@ export default function BlackjackScreen() {
 
     setTotalWinnings(totalWin);
     
+    const totalBetAmount = playerHands.reduce((sum, h) => sum + h.bet, 0);
+    
+    const playerWon = totalWin > 0;
+    const isPush = results.every(r => r.includes('Push'));
+    
     if (dealerBusted) {
       setResultMessage(`Dealer Busts! ${totalWin > 0 ? `+${totalWin}` : ''}`);
     } else if (totalWin > 0) {
       setResultMessage(`You Win ${totalWin}!`);
-    } else if (results.every(r => r.includes('Push'))) {
+    } else if (isPush) {
       setResultMessage('Push!');
     } else {
       setResultMessage('Dealer Wins');
     }
+    
+    saveMatch({
+      id: `blackjack-${Date.now()}`,
+      gameName: 'Blackjack',
+      gameMode: 'Standard',
+      placement: playerWon ? 1 : (isPush ? 1 : 2),
+      timeAgo: 'Just now',
+      moneyEarned: playerWon ? totalWin : (isPush ? 0 : -totalBetAmount),
+      won: playerWon,
+      timestamp: Date.now(),
+    });
 
     setGamePhase('game_over');
     
@@ -880,7 +937,7 @@ export default function BlackjackScreen() {
       tension: 50,
       friction: 7,
     }).start();
-  }, [playerHands, addMoney, addCrowns, resultAnimation]);
+  }, [playerHands, addMoney, addCrowns, resultAnimation, saveMatch]);
 
   const newRound = useCallback(() => {
     triggerHaptic();
