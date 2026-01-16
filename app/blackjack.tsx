@@ -260,61 +260,75 @@ const DraggableChip = ({
   onDrop,
   dropZones,
   triggerHaptic,
+  onTap,
 }: { 
   value: number; 
   disabled?: boolean;
   onDrop: (value: number, zone: 'main' | 'perfectPairs' | '21+3') => void;
   dropZones: DropZone[];
   triggerHaptic: () => void;
+  onTap: (value: number) => void;
 }) => {
   const colors = CHIP_COLORS[value] || ['#666', '#444'] as const;
   const size = 48;
   const pan = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(1)).current;
   const [isDragging, setIsDragging] = useState(false);
+  const dragDistance = useRef(0);
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => !disabled,
-      onMoveShouldSetPanResponder: () => !disabled,
+      onMoveShouldSetPanResponder: (_, gesture) => {
+        return !disabled && (Math.abs(gesture.dx) > 5 || Math.abs(gesture.dy) > 5);
+      },
       onPanResponderGrant: () => {
-        setIsDragging(true);
+        dragDistance.current = 0;
         triggerHaptic();
         Animated.spring(scale, {
-          toValue: 1.2,
+          toValue: 1.1,
           useNativeDriver: true,
         }).start();
       },
-      onPanResponderMove: Animated.event(
-        [null, { dx: pan.x, dy: pan.y }],
-        { useNativeDriver: false }
-      ),
+      onPanResponderMove: (_, gesture) => {
+        dragDistance.current = Math.sqrt(gesture.dx * gesture.dx + gesture.dy * gesture.dy);
+        if (dragDistance.current > 10) {
+          setIsDragging(true);
+        }
+        pan.setValue({ x: gesture.dx, y: gesture.dy });
+      },
       onPanResponderRelease: (_, gesture) => {
+        const wasDragging = dragDistance.current > 10;
         setIsDragging(false);
+        
         Animated.spring(scale, {
           toValue: 1,
           useNativeDriver: true,
         }).start();
 
-        const dropX = gesture.moveX;
-        const dropY = gesture.moveY;
+        if (wasDragging) {
+          const dropX = gesture.moveX;
+          const dropY = gesture.moveY;
 
-        let droppedZone: DropZone | null = null;
-        for (const zone of dropZones) {
-          if (
-            dropX >= zone.x &&
-            dropX <= zone.x + zone.width &&
-            dropY >= zone.y &&
-            dropY <= zone.y + zone.height
-          ) {
-            droppedZone = zone;
-            break;
+          let droppedZone: DropZone | null = null;
+          for (const zone of dropZones) {
+            if (
+              dropX >= zone.x &&
+              dropX <= zone.x + zone.width &&
+              dropY >= zone.y &&
+              dropY <= zone.y + zone.height
+            ) {
+              droppedZone = zone;
+              break;
+            }
           }
-        }
 
-        if (droppedZone) {
-          triggerHaptic();
-          onDrop(value, droppedZone.id);
+          if (droppedZone) {
+            triggerHaptic();
+            onDrop(value, droppedZone.id);
+          }
+        } else {
+          onTap(value);
         }
 
         Animated.spring(pan, {
@@ -347,7 +361,7 @@ const DraggableChip = ({
         colors={colors}
         style={[styles.chip, { width: size, height: size, borderRadius: size / 2 }]}
       >
-        <View style={[styles.chipInner, { width: size - 8, height: size - 8, borderRadius: (size - 8) / 2 }]}>
+        <View style={[styles.chipInnerSolid, { width: size - 8, height: size - 8, borderRadius: (size - 8) / 2 }]}>
           <Text style={[styles.chipValue, { fontSize: value >= 1000 ? 9 : 12 }]}>{formatChipValue(value)}</Text>
         </View>
       </LinearGradient>
@@ -491,6 +505,10 @@ export default function BlackjackScreen() {
 
   const handleChipDrop = useCallback((value: number, zone: 'main' | 'perfectPairs' | '21+3') => {
     addChipToBet(value, zone);
+  }, [addChipToBet]);
+
+  const handleChipTap = useCallback((value: number) => {
+    addChipToBet(value, 'main');
   }, [addChipToBet]);
 
   const clearBets = useCallback(() => {
@@ -1082,6 +1100,7 @@ export default function BlackjackScreen() {
                   value={value}
                   disabled={value > money - currentBet - perfectPairsBet - twentyOnePlus3Bet}
                   onDrop={handleChipDrop}
+                  onTap={handleChipTap}
                   dropZones={dropZones}
                   triggerHaptic={triggerHaptic}
                 />
@@ -1094,6 +1113,7 @@ export default function BlackjackScreen() {
                   value={value}
                   disabled={value > money - currentBet - perfectPairsBet - twentyOnePlus3Bet}
                   onDrop={handleChipDrop}
+                  onTap={handleChipTap}
                   dropZones={dropZones}
                   triggerHaptic={triggerHaptic}
                 />
@@ -1511,6 +1531,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  chipInnerSolid: {
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   chipValue: {
     color: '#fff',
