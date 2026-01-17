@@ -40,7 +40,9 @@ export default function FloatingGiftButton({ bottomOffset = 90 }: FloatingGiftBu
     addMoney, 
     canClaimDaily, 
     claimDailyReward, 
-    dailyStreak 
+    dailyStreak,
+    giftButtonPosition,
+    setGiftButtonPosition,
   } = useGame();
 
   const [showDailyPopup, setShowDailyPopup] = useState(false);
@@ -54,12 +56,18 @@ export default function FloatingGiftButton({ bottomOffset = 90 }: FloatingGiftBu
   const canClaim = canClaimDaily();
   const currentDay = Math.min(dailyStreak + (canClaim ? 1 : 0), 7);
 
+  const defaultX = SCREEN_WIDTH - BUTTON_SIZE - EDGE_PADDING;
   const defaultY = SCREEN_HEIGHT - bottomOffset - insets.bottom - BUTTON_SIZE - 40;
   
+  const initialX = giftButtonPosition?.x ?? defaultX;
+  const initialY = giftButtonPosition?.y ?? defaultY;
+  
   const pan = useRef(new Animated.ValueXY({ 
-    x: SCREEN_WIDTH - BUTTON_SIZE - EDGE_PADDING, 
-    y: defaultY 
+    x: initialX, 
+    y: initialY 
   })).current;
+  
+  const hasInitialized = useRef(false);
   
   const floatingButtonPulse = useRef(new Animated.Value(1)).current;
   const dailyScaleAnim = useRef(new Animated.Value(1)).current;
@@ -99,6 +107,7 @@ export default function FloatingGiftButton({ bottomOffset = 90 }: FloatingGiftBu
         const clampedY = Math.max(minY, Math.min(maxY, currentY));
         
         setIsOnRight(targetX > screenCenter);
+        setGiftButtonPosition({ x: targetX, y: clampedY });
         
         Animated.spring(pan, {
           toValue: { x: targetX, y: clampedY },
@@ -113,6 +122,21 @@ export default function FloatingGiftButton({ bottomOffset = 90 }: FloatingGiftBu
       },
     })
   ).current;
+
+  useEffect(() => {
+    if (giftButtonPosition && !hasInitialized.current) {
+      hasInitialized.current = true;
+      pan.setValue({ x: giftButtonPosition.x, y: giftButtonPosition.y });
+      setIsOnRight(giftButtonPosition.x > SCREEN_WIDTH / 2);
+    }
+  }, [giftButtonPosition, pan]);
+
+  useEffect(() => {
+    if (giftButtonPosition && hasInitialized.current) {
+      pan.setValue({ x: giftButtonPosition.x, y: giftButtonPosition.y });
+      setIsOnRight(giftButtonPosition.x > SCREEN_WIDTH / 2);
+    }
+  }, [giftButtonPosition, pan]);
 
   useEffect(() => {
     const updateTimer = async () => {

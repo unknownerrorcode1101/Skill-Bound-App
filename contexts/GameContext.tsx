@@ -15,6 +15,7 @@ const DAILY_STREAK_KEY = 'daily_streak';
 const PROFILE_PICTURE_KEY = 'profile_picture';
 const USERNAME_KEY = 'username';
 const AD_WATCH_KEY = 'ad_watch_data';
+const GIFT_BUTTON_POSITION_KEY = 'gift_button_position';
 
 const AD_COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4 hours
 const MAX_ADS_PER_PERIOD = 2;
@@ -90,6 +91,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
   const [username, setUsernameState] = useState<string>('Player');
   const [adWatchCount, setAdWatchCount] = useState<number>(0);
   const [adCooldownStart, setAdCooldownStart] = useState<number | null>(null);
+  const [giftButtonPosition, setGiftButtonPositionState] = useState<{ x: number; y: number } | null>(null);
   const previousLevelRef = useRef<number>(1);
 
   const level = getLevelFromTotalXp(xp);
@@ -169,6 +171,11 @@ export const [GameProvider, useGame] = createContextHook(() => {
           setAdWatchCount(adData.count || 0);
           setAdCooldownStart(adData.cooldownStart);
         }
+      }
+
+      const storedGiftPos = await AsyncStorage.getItem(GIFT_BUTTON_POSITION_KEY);
+      if (storedGiftPos) {
+        setGiftButtonPositionState(JSON.parse(storedGiftPos));
       }
     } catch (error) {
       console.log('Error loading XP:', error);
@@ -414,6 +421,13 @@ export const [GameProvider, useGame] = createContextHook(() => {
     return Math.max(0, MAX_ADS_PER_PERIOD - adWatchCount);
   }, [adCooldownStart, adWatchCount]);
 
+  const setGiftButtonPosition = useCallback((position: { x: number; y: number }) => {
+    setGiftButtonPositionState(position);
+    AsyncStorage.setItem(GIFT_BUTTON_POSITION_KEY, JSON.stringify(position)).catch(error => {
+      console.log('Error saving gift button position:', error);
+    });
+  }, []);
+
   return {
     matches,
     level,
@@ -454,5 +468,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     getAdCooldownRemaining,
     recordAdWatch,
     getAdsRemaining,
+    giftButtonPosition,
+    setGiftButtonPosition,
   };
 });
