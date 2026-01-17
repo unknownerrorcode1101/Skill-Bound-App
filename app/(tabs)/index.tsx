@@ -239,15 +239,15 @@ export default function HomeScreen() {
         <Text style={styles.logoSubtext}>BOUND</Text>
       </View>
 
+      <View style={styles.sectionDivider}>
+        <View style={styles.dividerLine} />
+      </View>
+
       <ScrollView 
         style={styles.gamesContainer}
         contentContainerStyle={styles.gamesContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.sectionDivider}>
-          <View style={styles.dividerLine} />
-        </View>
-
         <View style={styles.gamesGrid}>
           <TouchableOpacity
             activeOpacity={0.9}
@@ -672,7 +672,8 @@ const styles = StyleSheet.create({
   },
   sectionDivider: {
     alignItems: 'center',
-    marginBottom: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
   dividerLine: {
     width: '100%',
