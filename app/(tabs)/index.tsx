@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView, Dimensi
 import { useRef, useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Diamond, Crown, Plus } from 'lucide-react-native';
+import { Gem, Crown, Plus } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useGame } from '@/contexts/GameContext';
 
@@ -157,7 +157,7 @@ export default function HomeScreen() {
             delayLongPress={300}
           >
             <View style={styles.gemIcon}>
-              <Diamond size={14} color="#60a5fa" fill="#60a5fa" />
+              <Gem size={18} color="#60a5fa" fill="#60a5fa" />
             </View>
             <View style={styles.currencyValueContainer}>
               <Text style={styles.currencyText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
@@ -218,7 +218,7 @@ export default function HomeScreen() {
             <View style={styles.tooltipContainerBlue}>
               <Text style={styles.tooltipLabel}>Total Gems</Text>
               <View style={styles.tooltipGemsRow}>
-                <Diamond size={18} color="#60a5fa" fill="#60a5fa" />
+                <Gem size={18} color="#60a5fa" fill="#60a5fa" />
                 <Text style={styles.tooltipAmountBlue}>{formatGemsFull(gems)}</Text>
               </View>
             </View>
@@ -231,7 +231,7 @@ export default function HomeScreen() {
         <View style={styles.logoWrapper}>
           <Text style={styles.logoText}>SKILL</Text>
           <View style={styles.logoBolt}>
-            <Diamond size={32} color="#60a5fa" fill="#60a5fa" />
+            <Gem size={32} color="#60a5fa" fill="#60a5fa" />
           </View>
         </View>
         <Text style={styles.logoSubtext}>BOUND</Text>
@@ -580,23 +580,24 @@ const styles = StyleSheet.create({
   currencyValueContainer: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   gemIcon: {
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
   moneyIcon: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: '#22c55e',
     justifyContent: 'center',
     alignItems: 'center',
   },
   dollarIcon: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '800' as const,
     color: '#fff',
   },
