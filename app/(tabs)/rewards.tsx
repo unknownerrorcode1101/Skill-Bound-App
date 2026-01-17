@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Platform, ScrollView } from 'react-native';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Diamond, Gift, Check, Flame, Star, Clock, Sparkles } from 'lucide-react-native';
+import { Gem, Gift, Check, Flame, Star, Clock, Sparkles } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useGame } from '@/contexts/GameContext';
 import * as Haptics from 'expo-haptics';
@@ -321,7 +321,7 @@ export default function RewardsScreen() {
                     </Text>
                     <View style={styles.rewardItems}>
                       <View style={styles.rewardItem}>
-                        <Diamond size={14} color={isLocked ? '#475569' : '#60a5fa'} fill={isLocked ? '#475569' : '#60a5fa'} />
+                        <Gem size={14} color={isLocked ? '#475569' : '#60a5fa'} fill={isLocked ? '#475569' : '#60a5fa'} />
                         <Text style={[styles.rewardAmount, isLocked && styles.rewardAmountLocked]}>
                           {reward.gems}
                         </Text>
@@ -397,7 +397,7 @@ export default function RewardsScreen() {
                   <Text style={styles.rewardPopupTitle}>Rewards Claimed!</Text>
                   <View style={styles.rewardPopupItems}>
                     <View style={styles.rewardPopupItem}>
-                      <Diamond size={22} color="#60a5fa" fill="#60a5fa" />
+                      <Gem size={22} color="#60a5fa" fill="#60a5fa" />
                       <Text style={styles.rewardPopupAmount}>+{rewardGems}</Text>
                     </View>
                     <View style={styles.rewardPopupItem}>
@@ -519,7 +519,7 @@ export default function RewardsScreen() {
                   <View style={styles.spinResultContent}>
                     {resultSegment.type === 'gems' ? (
                       <>
-                        <Diamond size={28} color="#60a5fa" fill="#60a5fa" />
+                        <Gem size={28} color="#60a5fa" fill="#60a5fa" />
                         <Text style={styles.spinResultAmount}>+{resultSegment.amount}</Text>
                       </>
                     ) : (
@@ -541,7 +541,7 @@ export default function RewardsScreen() {
                 {WHEEL_SEGMENTS.map((segment) => (
                   <View key={segment.id} style={[styles.prizeItem, { borderColor: segment.color }]}>
                     {segment.type === 'gems' ? (
-                      <Diamond size={12} color="#60a5fa" fill="#60a5fa" />
+                      <Gem size={12} color="#60a5fa" fill="#60a5fa" />
                     ) : (
                       <Text style={styles.prizeMoneyIcon}>$</Text>
                     )}

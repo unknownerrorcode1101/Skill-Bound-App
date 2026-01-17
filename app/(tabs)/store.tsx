@@ -1,8 +1,8 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Modal, Pressable } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Diamond, DollarSign, Check, Gift, Play, Clock, Ticket, ArrowDownCircle } from 'lucide-react-native';
+import { Gem, DollarSign, Check, Gift, Play, Clock, Ticket, ArrowDownCircle, CreditCard, X, Sparkles } from 'lucide-react-native';
 import { useGame } from '@/contexts/GameContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -52,23 +52,57 @@ const diamondItems: PurchaseItem[] = [
   { id: 'd4', amount: 1500, price: 14.99, bonus: 150 },
 ];
 
-const FREE_GEMS_COOLDOWN = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
+const FREE_GEMS_COOLDOWN = 4 * 60 * 60 * 1000;
 const FREE_GEMS_AMOUNT = 25;
+const AD_GEMS_AMOUNT = 10;
+
+const formatAdCooldown = (ms: number): string => {
+  const hours = Math.floor(ms / (1000 * 60 * 60));
+  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+  return `${hours}h ${minutes}m ${seconds}s`;
+};
 
 export default function StoreScreen() {
   const insets = useSafeAreaInsets();
-  const { addMoney, addGems, gems, money } = useGame();
+  const { 
+    addMoney, 
+    addGems, 
+    gems, 
+    money,
+    canWatchAd,
+    getAdCooldownRemaining,
+    recordAdWatch,
+    getAdsRemaining
+  } = useGame();
+  
   const [promoCode, setPromoCode] = useState('');
   const [freeGemsAvailable, setFreeGemsAvailable] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [adCooldown, setAdCooldown] = useState(0);
+  const [adsLeft, setAdsLeft] = useState(2);
+  
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvv, setCvv] = useState('');
+  const [cardholderName, setCardholderName] = useState('');
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationTitle, setNotificationTitle] = useState('');
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('success');
 
   useEffect(() => {
     checkFreeGemsCooldown();
     const interval = setInterval(() => {
       checkFreeGemsCooldown();
+      setAdCooldown(getAdCooldownRemaining());
+      setAdsLeft(getAdsRemaining());
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [getAdCooldownRemaining, getAdsRemaining]);
 
   const checkFreeGemsCooldown = async () => {
     try {
@@ -98,6 +132,13 @@ export default function StoreScreen() {
     return `${hours}h ${minutes}m ${seconds}s`;
   };
 
+  const showThemedNotification = (title: string, message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setNotificationTitle(title);
+    setNotificationMessage(message);
+    setNotificationType(type);
+    setShowNotification(true);
+  };
+
   const handleClaimFreeGems = async () => {
     if (!freeGemsAvailable) return;
     
@@ -106,76 +147,124 @@ export default function StoreScreen() {
       addGems(FREE_GEMS_AMOUNT);
       setFreeGemsAvailable(false);
       setTimeRemaining(FREE_GEMS_COOLDOWN);
-      Alert.alert('Free Gems!', `You received ${FREE_GEMS_AMOUNT} gems!`);
+      showThemedNotification('Free Gems!', `You received ${FREE_GEMS_AMOUNT} gems!`, 'success');
     } catch (e) {
       console.log('Error claiming free gems:', e);
     }
   };
 
   const handleWatchVideo = () => {
-    addGems(10);
-    Alert.alert('Reward Earned!', 'You received 10 gems for watching!');
+    if (!canWatchAd()) {
+      showThemedNotification('Ad Limit Reached', `You can watch more ads in ${formatAdCooldown(adCooldown)}`, 'info');
+      return;
+    }
+    
+    recordAdWatch();
+    addGems(AD_GEMS_AMOUNT);
+    showThemedNotification('Reward Earned!', `You received ${AD_GEMS_AMOUNT} gems for watching!`, 'success');
   };
 
   const handleRedeemPromo = () => {
     if (!promoCode.trim()) {
-      Alert.alert('Error', 'Please enter a promo code');
+      showThemedNotification('Error', 'Please enter a promo code', 'error');
       return;
     }
     
     const code = promoCode.trim().toUpperCase();
     if (code === 'SKILLBOUND100') {
       addGems(100);
-      Alert.alert('Success!', 'You received 100 gems!');
+      showThemedNotification('Success!', 'You received 100 gems!', 'success');
       setPromoCode('');
     } else if (code === 'WELCOME50') {
       addGems(50);
-      Alert.alert('Success!', 'You received 50 gems!');
+      showThemedNotification('Success!', 'You received 50 gems!', 'success');
       setPromoCode('');
     } else {
-      Alert.alert('Invalid Code', 'This promo code is invalid or expired');
+      showThemedNotification('Invalid Code', 'This promo code is invalid or expired', 'error');
     }
   };
 
   const handleWithdraw = () => {
     if (money < 10) {
-      Alert.alert('Minimum Withdrawal', 'You need at least $10 to withdraw');
+      showThemedNotification('Minimum Withdrawal', 'You need at least $10 to withdraw', 'info');
       return;
     }
-    Alert.alert(
-      'Withdraw Funds',
-      `You have $${formatCompact(money)} available for withdrawal. Withdrawals are processed within 24-48 hours.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Request Withdrawal', onPress: () => Alert.alert('Request Submitted', 'Your withdrawal request has been submitted for review.') }
-      ]
-    );
+    setWithdrawAmount(money.toFixed(2));
+    setShowWithdrawModal(true);
+  };
+
+  const formatCardNumber = (text: string) => {
+    const cleaned = text.replace(/\D/g, '');
+    const chunks = cleaned.match(/.{1,4}/g);
+    return chunks ? chunks.join(' ').substring(0, 19) : '';
+  };
+
+  const formatExpiry = (text: string) => {
+    const cleaned = text.replace(/\D/g, '');
+    if (cleaned.length >= 2) {
+      return cleaned.substring(0, 2) + '/' + cleaned.substring(2, 4);
+    }
+    return cleaned;
+  };
+
+  const handleSubmitWithdrawal = () => {
+    if (!cardNumber || cardNumber.replace(/\s/g, '').length < 16) {
+      showThemedNotification('Invalid Card', 'Please enter a valid card number', 'error');
+      return;
+    }
+    if (!expiryDate || expiryDate.length < 5) {
+      showThemedNotification('Invalid Expiry', 'Please enter a valid expiry date', 'error');
+      return;
+    }
+    if (!cvv || cvv.length < 3) {
+      showThemedNotification('Invalid CVV', 'Please enter a valid CVV', 'error');
+      return;
+    }
+    if (!cardholderName.trim()) {
+      showThemedNotification('Missing Name', 'Please enter the cardholder name', 'error');
+      return;
+    }
+
+    setShowWithdrawModal(false);
+    setCardNumber('');
+    setExpiryDate('');
+    setCvv('');
+    setCardholderName('');
+    
+    setTimeout(() => {
+      showThemedNotification('Request Submitted', 'Your withdrawal request has been submitted for review. Funds will arrive within 24-48 hours.', 'success');
+    }, 300);
   };
 
   const handleBuyCash = (item: PurchaseItem) => {
     const totalAmount = item.amount + (item.bonus || 0);
     addMoney(totalAmount);
-    console.log(`Purchased $${totalAmount} cash`);
+    showThemedNotification('Purchase Complete!', `You received $${totalAmount} cash!`, 'success');
   };
 
   const handleBuyDiamonds = (item: PurchaseItem) => {
     const totalAmount = item.amount + (item.bonus || 0);
     addGems(totalAmount);
-    console.log(`Purchased ${totalAmount} diamonds`);
+    showThemedNotification('Purchase Complete!', `You received ${totalAmount} gems!`, 'success');
   };
+
+  const canWatch = canWatchAd();
 
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#0f172a', '#1e293b', '#0f172a']}
+        colors={['#0f172a', '#1e3a5f', '#0f172a']}
         style={StyleSheet.absoluteFill}
       />
       
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <Text style={styles.headerTitle}>STORE</Text>
+        <View style={styles.headerTitleRow}>
+          <Sparkles size={24} color="#fbbf24" />
+          <Text style={styles.headerTitle}>STORE</Text>
+        </View>
         <View style={styles.balanceRow}>
           <View style={styles.balanceItem}>
-            <Diamond size={18} color="#60a5fa" fill="#60a5fa" />
+            <Gem size={18} color="#60a5fa" fill="#60a5fa" />
             <Text style={styles.balanceText} numberOfLines={1}>{formatGemsCompact(gems)}</Text>
           </View>
           <View style={styles.balanceItemGreen}>
@@ -190,47 +279,60 @@ export default function StoreScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Withdraw Button */}
         <TouchableOpacity 
           style={styles.withdrawButton}
           onPress={handleWithdraw}
           activeOpacity={0.8}
         >
           <LinearGradient
-            colors={['#8b5cf6', '#7c3aed']}
+            colors={['#8b5cf6', '#6d28d9', '#5b21b6']}
             style={styles.withdrawGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
           >
             <ArrowDownCircle size={22} color="#fff" />
             <Text style={styles.withdrawText}>WITHDRAW FUNDS</Text>
+            <View style={styles.withdrawBadge}>
+              <CreditCard size={12} color="#8b5cf6" />
+            </View>
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* Free Gems Section */}
         <View style={styles.freeSection}>
+          <LinearGradient
+            colors={['rgba(251, 191, 36, 0.15)', 'rgba(245, 158, 11, 0.05)']}
+            style={styles.freeSectionBg}
+          />
           <View style={styles.freeSectionHeader}>
-            <Gift size={20} color="#f59e0b" />
+            <Gift size={20} color="#fbbf24" />
             <Text style={styles.freeSectionTitle}>FREE GEMS</Text>
+            {adsLeft < 2 && (
+              <View style={styles.adsRemainingBadge}>
+                <Text style={styles.adsRemainingText}>{adsLeft}/2 ads left</Text>
+              </View>
+            )}
           </View>
           
           <View style={styles.freeOptionsRow}>
-            {/* 4 Hour Free Gems */}
             <TouchableOpacity 
               style={[styles.freeCard, !freeGemsAvailable && styles.freeCardDisabled]}
               onPress={handleClaimFreeGems}
               activeOpacity={0.8}
               disabled={!freeGemsAvailable}
             >
+              <LinearGradient
+                colors={freeGemsAvailable ? ['#1e293b', '#334155'] : ['#1e293b', '#1e293b']}
+                style={styles.freeCardBg}
+              />
               <View style={styles.freeCardIcon}>
                 {freeGemsAvailable ? (
-                  <Gift size={24} color="#f59e0b" />
+                  <Gift size={24} color="#fbbf24" />
                 ) : (
                   <Clock size={24} color="#64748b" />
                 )}
               </View>
               <Text style={styles.freeCardAmount}>+{FREE_GEMS_AMOUNT}</Text>
-              <Diamond size={14} color="#60a5fa" fill="#60a5fa" style={styles.freeCardDiamond} />
+              <Gem size={14} color="#60a5fa" fill="#60a5fa" style={styles.freeCardDiamond} />
               {freeGemsAvailable ? (
                 <View style={styles.claimButton}>
                   <Text style={styles.claimButtonText}>CLAIM</Text>
@@ -240,26 +342,37 @@ export default function StoreScreen() {
               )}
             </TouchableOpacity>
 
-            {/* Watch Video */}
             <TouchableOpacity 
-              style={styles.freeCard}
+              style={[styles.freeCard, !canWatch && styles.freeCardDisabled]}
               onPress={handleWatchVideo}
               activeOpacity={0.8}
+              disabled={!canWatch}
             >
+              <LinearGradient
+                colors={canWatch ? ['#1e293b', '#334155'] : ['#1e293b', '#1e293b']}
+                style={styles.freeCardBg}
+              />
               <View style={styles.videoCardIcon}>
-                <Play size={24} color="#ef4444" fill="#ef4444" />
+                <Play size={24} color={canWatch ? '#ef4444' : '#64748b'} fill={canWatch ? '#ef4444' : '#64748b'} />
               </View>
-              <Text style={styles.freeCardAmount}>+10</Text>
-              <Diamond size={14} color="#60a5fa" fill="#60a5fa" style={styles.freeCardDiamond} />
-              <View style={styles.watchButton}>
-                <Text style={styles.watchButtonText}>WATCH</Text>
-              </View>
+              <Text style={styles.freeCardAmount}>+{AD_GEMS_AMOUNT}</Text>
+              <Gem size={14} color="#60a5fa" fill="#60a5fa" style={styles.freeCardDiamond} />
+              {canWatch ? (
+                <View style={styles.watchButton}>
+                  <Text style={styles.watchButtonText}>WATCH</Text>
+                </View>
+              ) : (
+                <Text style={styles.cooldownText}>{formatAdCooldown(adCooldown)}</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Promo Code Section */}
         <View style={styles.promoSection}>
+          <LinearGradient
+            colors={['rgba(34, 197, 94, 0.15)', 'rgba(22, 163, 74, 0.05)']}
+            style={styles.promoSectionBg}
+          />
           <View style={styles.promoHeader}>
             <Ticket size={18} color="#22c55e" />
             <Text style={styles.promoTitle}>PROMO CODE</Text>
@@ -278,22 +391,34 @@ export default function StoreScreen() {
               onPress={handleRedeemPromo}
               activeOpacity={0.8}
             >
-              <Text style={styles.promoButtonText}>REDEEM</Text>
+              <LinearGradient
+                colors={['#22c55e', '#16a34a']}
+                style={styles.promoButtonGradient}
+              >
+                <Text style={styles.promoButtonText}>REDEEM</Text>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={styles.sectionIconGreen}>
+            <LinearGradient
+              colors={['#22c55e', '#16a34a']}
+              style={styles.sectionIconGreen}
+            >
               <DollarSign size={18} color="#fff" />
-            </View>
+            </LinearGradient>
             <Text style={styles.sectionTitle}>CASH</Text>
           </View>
 
           <View style={styles.itemsRow}>
             {moneyItems.map((item) => (
               <View key={item.id} style={styles.itemCard}>
+                <LinearGradient
+                  colors={['#1e293b', '#0f172a']}
+                  style={styles.itemCardBg}
+                />
                 {item.popular && (
                   <View style={styles.popularBadge}>
                     <Text style={styles.popularText}>POPULAR</Text>
@@ -327,15 +452,22 @@ export default function StoreScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={styles.sectionIconBlue}>
-              <Diamond size={18} color="#fff" fill="#fff" />
-            </View>
-            <Text style={styles.sectionTitle}>DIAMONDS</Text>
+            <LinearGradient
+              colors={['#3b82f6', '#2563eb']}
+              style={styles.sectionIconBlue}
+            >
+              <Gem size={18} color="#fff" fill="#fff" />
+            </LinearGradient>
+            <Text style={styles.sectionTitle}>GEMS</Text>
           </View>
 
           <View style={styles.itemsRow}>
             {diamondItems.map((item) => (
               <View key={item.id} style={styles.itemCard}>
+                <LinearGradient
+                  colors={['#1e293b', '#0f172a']}
+                  style={styles.itemCardBg}
+                />
                 {item.popular && (
                   <View style={styles.popularBadgeBlue}>
                     <Text style={styles.popularText}>BEST VALUE</Text>
@@ -343,7 +475,7 @@ export default function StoreScreen() {
                 )}
                 <View style={styles.itemContent}>
                   <View style={styles.itemIconBlue}>
-                    <Diamond size={20} color="#60a5fa" fill="#60a5fa" />
+                    <Gem size={20} color="#60a5fa" fill="#60a5fa" />
                   </View>
                   <Text style={styles.itemAmountBlue}>{item.amount}</Text>
                   {item.bonus && (
@@ -380,6 +512,172 @@ export default function StoreScreen() {
 
         <View style={styles.footerSpace} />
       </ScrollView>
+
+      <Modal
+        visible={showWithdrawModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowWithdrawModal(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay}
+          onPress={() => setShowWithdrawModal(false)}
+        >
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <LinearGradient
+              colors={['#1e293b', '#0f172a']}
+              style={styles.modalGradient}
+            >
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Withdraw Funds</Text>
+                <TouchableOpacity onPress={() => setShowWithdrawModal(false)}>
+                  <X size={24} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.withdrawAmountContainer}>
+                <Text style={styles.withdrawAmountLabel}>Amount to withdraw</Text>
+                <Text style={styles.withdrawAmountValue}>${withdrawAmount}</Text>
+              </View>
+
+              <View style={styles.cardForm}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Card Number</Text>
+                  <View style={styles.inputContainer}>
+                    <CreditCard size={18} color="#64748b" />
+                    <TextInput
+                      style={styles.cardInput}
+                      placeholder="1234 5678 9012 3456"
+                      placeholderTextColor="#475569"
+                      value={cardNumber}
+                      onChangeText={(text) => setCardNumber(formatCardNumber(text))}
+                      keyboardType="numeric"
+                      maxLength={19}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.inputRow}>
+                  <View style={[styles.inputGroup, { flex: 1 }]}>
+                    <Text style={styles.inputLabel}>Expiry</Text>
+                    <TextInput
+                      style={styles.smallInput}
+                      placeholder="MM/YY"
+                      placeholderTextColor="#475569"
+                      value={expiryDate}
+                      onChangeText={(text) => setExpiryDate(formatExpiry(text))}
+                      keyboardType="numeric"
+                      maxLength={5}
+                    />
+                  </View>
+                  <View style={[styles.inputGroup, { flex: 1, marginLeft: 12 }]}>
+                    <Text style={styles.inputLabel}>CVV</Text>
+                    <TextInput
+                      style={styles.smallInput}
+                      placeholder="123"
+                      placeholderTextColor="#475569"
+                      value={cvv}
+                      onChangeText={setCvv}
+                      keyboardType="numeric"
+                      maxLength={4}
+                      secureTextEntry
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Cardholder Name</Text>
+                  <TextInput
+                    style={styles.nameInput}
+                    placeholder="John Doe"
+                    placeholderTextColor="#475569"
+                    value={cardholderName}
+                    onChangeText={setCardholderName}
+                    autoCapitalize="words"
+                  />
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={handleSubmitWithdrawal}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={['#8b5cf6', '#6d28d9']}
+                  style={styles.submitButtonGradient}
+                >
+                  <Text style={styles.submitButtonText}>REQUEST WITHDRAWAL</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <Text style={styles.withdrawNote}>
+                Withdrawals are processed within 24-48 hours
+              </Text>
+            </LinearGradient>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={showNotification}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowNotification(false)}
+      >
+        <Pressable 
+          style={styles.notificationOverlay}
+          onPress={() => setShowNotification(false)}
+        >
+          <Pressable style={styles.notificationContent} onPress={(e) => e.stopPropagation()}>
+            <LinearGradient
+              colors={['#1e293b', '#0f172a']}
+              style={[
+                styles.notificationGradient,
+                notificationType === 'success' && styles.notificationSuccess,
+                notificationType === 'error' && styles.notificationError,
+                notificationType === 'info' && styles.notificationInfo,
+              ]}
+            >
+              <View style={styles.notificationIconContainer}>
+                {notificationType === 'success' && (
+                  <View style={styles.notificationIconSuccess}>
+                    <Check size={28} color="#fff" strokeWidth={3} />
+                  </View>
+                )}
+                {notificationType === 'error' && (
+                  <View style={styles.notificationIconError}>
+                    <X size={28} color="#fff" strokeWidth={3} />
+                  </View>
+                )}
+                {notificationType === 'info' && (
+                  <View style={styles.notificationIconInfo}>
+                    <Clock size={28} color="#fff" />
+                  </View>
+                )}
+              </View>
+              <Text style={styles.notificationTitle}>{notificationTitle}</Text>
+              <Text style={styles.notificationMessage}>{notificationMessage}</Text>
+              <TouchableOpacity
+                style={styles.notificationButton}
+                onPress={() => setShowNotification(false)}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={
+                    notificationType === 'success' ? ['#22c55e', '#16a34a'] :
+                    notificationType === 'error' ? ['#ef4444', '#dc2626'] :
+                    ['#3b82f6', '#2563eb']
+                  }
+                  style={styles.notificationButtonGradient}
+                >
+                  <Text style={styles.notificationButtonText}>OK</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </LinearGradient>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -393,12 +691,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 16,
   },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
   headerTitle: {
     fontSize: 26,
     fontWeight: '900' as const,
     color: '#fff',
     letterSpacing: 2,
-    marginBottom: 12,
   },
   balanceRow: {
     flexDirection: 'row',
@@ -445,15 +748,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   withdrawButton: {
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: 'hidden',
     marginBottom: 16,
+    shadowColor: '#8b5cf6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   withdrawGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
+    paddingVertical: 16,
     gap: 10,
   },
   withdrawText: {
@@ -462,13 +770,23 @@ const styles = StyleSheet.create({
     color: '#fff',
     letterSpacing: 1,
   },
-  freeSection: {
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+  withdrawBadge: {
+    backgroundColor: '#fff',
     borderRadius: 12,
+    padding: 4,
+    marginLeft: 4,
+  },
+  freeSection: {
+    borderRadius: 14,
     padding: 14,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.3)',
+    borderColor: 'rgba(251, 191, 36, 0.4)',
+    overflow: 'hidden',
+  },
+  freeSectionBg: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 14,
   },
   freeSectionHeader: {
     flexDirection: 'row',
@@ -479,8 +797,20 @@ const styles = StyleSheet.create({
   freeSectionTitle: {
     fontSize: 14,
     fontWeight: '800' as const,
-    color: '#f59e0b',
+    color: '#fbbf24',
     letterSpacing: 1,
+    flex: 1,
+  },
+  adsRemainingBadge: {
+    backgroundColor: 'rgba(251, 191, 36, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  adsRemainingText: {
+    fontSize: 10,
+    fontWeight: '700' as const,
+    color: '#fbbf24',
   },
   freeOptionsRow: {
     flexDirection: 'row',
@@ -488,59 +818,75 @@ const styles = StyleSheet.create({
   },
   freeCard: {
     flex: 1,
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
     borderRadius: 12,
     padding: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(71, 85, 105, 0.3)',
+    borderColor: 'rgba(71, 85, 105, 0.4)',
+    overflow: 'hidden',
+  },
+  freeCardBg: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 12,
   },
   freeCardDisabled: {
     opacity: 0.7,
   },
   freeCardIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(251, 191, 36, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
+    borderWidth: 2,
+    borderColor: 'rgba(251, 191, 36, 0.3)',
   },
   videoCardIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
+    borderWidth: 2,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
   },
   freeCardAmount: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '900' as const,
     color: '#fff',
   },
   freeCardDiamond: {
     marginTop: 2,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   claimButton: {
-    backgroundColor: '#f59e0b',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: '#fbbf24',
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+    borderRadius: 10,
+    shadowColor: '#fbbf24',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
   },
   claimButtonText: {
     fontSize: 12,
     fontWeight: '800' as const,
-    color: '#fff',
+    color: '#000',
   },
   watchButton: {
     backgroundColor: '#ef4444',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+    borderRadius: 10,
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
   },
   watchButtonText: {
     fontSize: 12,
@@ -553,12 +899,16 @@ const styles = StyleSheet.create({
     color: '#64748b',
   },
   promoSection: {
-    backgroundColor: 'rgba(34, 197, 94, 0.1)',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 14,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(34, 197, 94, 0.3)',
+    borderColor: 'rgba(34, 197, 94, 0.4)',
+    overflow: 'hidden',
+  },
+  promoSectionBg: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 14,
   },
   promoHeader: {
     flexDirection: 'row',
@@ -578,7 +928,7 @@ const styles = StyleSheet.create({
   },
   promoInput: {
     flex: 1,
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -586,12 +936,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600' as const,
     borderWidth: 1,
-    borderColor: 'rgba(71, 85, 105, 0.3)',
+    borderColor: 'rgba(71, 85, 105, 0.4)',
   },
   promoButton: {
-    backgroundColor: '#22c55e',
-    paddingHorizontal: 20,
     borderRadius: 10,
+    overflow: 'hidden',
+  },
+  promoButtonGradient: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     justifyContent: 'center',
   },
   promoButtonText: {
@@ -606,26 +959,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
-    gap: 8,
+    gap: 10,
   },
   sectionIconGreen: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: '#22c55e',
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
   sectionIconBlue: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: '#3b82f6',
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '800' as const,
     color: '#fff',
     letterSpacing: 1,
@@ -633,35 +984,41 @@ const styles = StyleSheet.create({
   itemsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
   itemCard: {
     width: '48%',
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 14,
+    padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(71, 85, 105, 0.3)',
+    borderColor: 'rgba(71, 85, 105, 0.4)',
     position: 'relative',
+    overflow: 'hidden',
+  },
+  itemCardBg: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 14,
   },
   popularBadge: {
     position: 'absolute',
-    top: -8,
+    top: -1,
     right: 8,
     backgroundColor: '#f59e0b',
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingVertical: 4,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
     zIndex: 10,
   },
   popularBadgeBlue: {
     position: 'absolute',
-    top: -8,
+    top: -1,
     right: 8,
     backgroundColor: '#3b82f6',
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingVertical: 4,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
     zIndex: 10,
   },
   popularText: {
@@ -675,30 +1032,34 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   itemIconGreen: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(34, 197, 94, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
+    borderWidth: 2,
+    borderColor: 'rgba(34, 197, 94, 0.3)',
   },
   itemIconBlue: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
+    borderWidth: 2,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
   },
   itemAmountGreen: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '900' as const,
     color: '#22c55e',
   },
   itemAmountBlue: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '900' as const,
     color: '#60a5fa',
   },
@@ -715,29 +1076,31 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   buyButton: {
-    borderRadius: 8,
+    borderRadius: 10,
     overflow: 'hidden',
-    marginTop: 8,
+    marginTop: 10,
   },
   buyButtonGradient: {
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: 'center',
   },
   buyButtonText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800' as const,
     color: '#fff',
   },
   infoSection: {
-    backgroundColor: 'rgba(30, 41, 59, 0.5)',
-    borderRadius: 12,
-    padding: 14,
-    gap: 8,
+    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    borderRadius: 14,
+    padding: 16,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(71, 85, 105, 0.3)',
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   infoText: {
     fontSize: 13,
@@ -746,5 +1109,213 @@ const styles = StyleSheet.create({
   },
   footerSpace: {
     height: 30,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 380,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  modalGradient: {
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.4)',
+    borderRadius: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '800' as const,
+    color: '#fff',
+  },
+  withdrawAmountContainer: {
+    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.3)',
+  },
+  withdrawAmountLabel: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#94a3b8',
+    marginBottom: 4,
+  },
+  withdrawAmountValue: {
+    fontSize: 32,
+    fontWeight: '900' as const,
+    color: '#8b5cf6',
+  },
+  cardForm: {
+    gap: 16,
+  },
+  inputGroup: {
+    gap: 6,
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#94a3b8',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(71, 85, 105, 0.4)',
+  },
+  cardInput: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  inputRow: {
+    flexDirection: 'row',
+  },
+  smallInput: {
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600' as const,
+    borderWidth: 1,
+    borderColor: 'rgba(71, 85, 105, 0.4)',
+    textAlign: 'center',
+  },
+  nameInput: {
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600' as const,
+    borderWidth: 1,
+    borderColor: 'rgba(71, 85, 105, 0.4)',
+  },
+  submitButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 20,
+  },
+  submitButtonGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  submitButtonText: {
+    fontSize: 15,
+    fontWeight: '800' as const,
+    color: '#fff',
+    letterSpacing: 1,
+  },
+  withdrawNote: {
+    fontSize: 12,
+    color: '#64748b',
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  notificationOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  notificationContent: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  notificationGradient: {
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderRadius: 20,
+  },
+  notificationSuccess: {
+    borderColor: 'rgba(34, 197, 94, 0.5)',
+  },
+  notificationError: {
+    borderColor: 'rgba(239, 68, 68, 0.5)',
+  },
+  notificationInfo: {
+    borderColor: 'rgba(59, 130, 246, 0.5)',
+  },
+  notificationIconContainer: {
+    marginBottom: 16,
+  },
+  notificationIconSuccess: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#22c55e',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationIconError: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#ef4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationIconInfo: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#3b82f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationTitle: {
+    fontSize: 20,
+    fontWeight: '800' as const,
+    color: '#fff',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  notificationMessage: {
+    fontSize: 14,
+    color: '#94a3b8',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  notificationButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  notificationButtonGradient: {
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  notificationButtonText: {
+    fontSize: 15,
+    fontWeight: '800' as const,
+    color: '#fff',
   },
 });

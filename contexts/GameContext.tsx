@@ -14,6 +14,10 @@ const LAST_DAILY_CLAIM_KEY = 'last_daily_claim';
 const DAILY_STREAK_KEY = 'daily_streak';
 const PROFILE_PICTURE_KEY = 'profile_picture';
 const USERNAME_KEY = 'username';
+const AD_WATCH_KEY = 'ad_watch_data';
+
+const AD_COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4 hours
+const MAX_ADS_PER_PERIOD = 2;
 
 const SPIN_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
 
@@ -84,6 +88,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
   const [dailyStreak, setDailyStreak] = useState<number>(0);
   const [profilePicture, setProfilePictureState] = useState<string | null>(null);
   const [username, setUsernameState] = useState<string>('Player');
+  const [adWatchCount, setAdWatchCount] = useState<number>(0);
+  const [adCooldownStart, setAdCooldownStart] = useState<number | null>(null);
   const previousLevelRef = useRef<number>(1);
 
   const level = getLevelFromTotalXp(xp);
@@ -150,6 +156,19 @@ export const [GameProvider, useGame] = createContextHook(() => {
       const storedUsername = await AsyncStorage.getItem(USERNAME_KEY);
       if (storedUsername) {
         setUsernameState(JSON.parse(storedUsername));
+      }
+
+      const storedAdData = await AsyncStorage.getItem(AD_WATCH_KEY);
+      if (storedAdData) {
+        const adData = JSON.parse(storedAdData);
+        const elapsed = Date.now() - (adData.cooldownStart || 0);
+        if (elapsed >= AD_COOLDOWN_MS) {
+          setAdWatchCount(0);
+          setAdCooldownStart(null);
+        } else {
+          setAdWatchCount(adData.count || 0);
+          setAdCooldownStart(adData.cooldownStart);
+        }
       }
     } catch (error) {
       console.log('Error loading XP:', error);
@@ -350,6 +369,51 @@ export const [GameProvider, useGame] = createContextHook(() => {
     return newStreak;
   }, [lastDailyClaim, dailyStreak]);
 
+  const canWatchAd = useCallback(() => {
+    if (adCooldownStart) {
+      const elapsed = Date.now() - adCooldownStart;
+      if (elapsed >= AD_COOLDOWN_MS) {
+        return true;
+      }
+      return adWatchCount < MAX_ADS_PER_PERIOD;
+    }
+    return true;
+  }, [adCooldownStart, adWatchCount]);
+
+  const getAdCooldownRemaining = useCallback(() => {
+    if (!adCooldownStart || adWatchCount < MAX_ADS_PER_PERIOD) return 0;
+    const remaining = AD_COOLDOWN_MS - (Date.now() - adCooldownStart);
+    return Math.max(0, remaining);
+  }, [adCooldownStart, adWatchCount]);
+
+  const recordAdWatch = useCallback(() => {
+    const now = Date.now();
+    let newCount = adWatchCount + 1;
+    let newCooldownStart = adCooldownStart;
+
+    if (!adCooldownStart || (now - adCooldownStart >= AD_COOLDOWN_MS)) {
+      newCount = 1;
+      newCooldownStart = now;
+    }
+
+    setAdWatchCount(newCount);
+    setAdCooldownStart(newCooldownStart);
+
+    AsyncStorage.setItem(AD_WATCH_KEY, JSON.stringify({
+      count: newCount,
+      cooldownStart: newCooldownStart,
+    })).catch(error => {
+      console.log('Error saving ad data:', error);
+    });
+  }, [adWatchCount, adCooldownStart]);
+
+  const getAdsRemaining = useCallback(() => {
+    if (!adCooldownStart) return MAX_ADS_PER_PERIOD;
+    const elapsed = Date.now() - adCooldownStart;
+    if (elapsed >= AD_COOLDOWN_MS) return MAX_ADS_PER_PERIOD;
+    return Math.max(0, MAX_ADS_PER_PERIOD - adWatchCount);
+  }, [adCooldownStart, adWatchCount]);
+
   return {
     matches,
     level,
@@ -386,5 +450,9 @@ export const [GameProvider, useGame] = createContextHook(() => {
     canClaimDaily,
     claimDailyReward,
     dailyStreak,
+    canWatchAd,
+    getAdCooldownRemaining,
+    recordAdWatch,
+    getAdsRemaining,
   };
 });
