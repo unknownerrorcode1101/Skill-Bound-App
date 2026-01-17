@@ -113,7 +113,7 @@ export default function HomeScreen() {
         style={StyleSheet.absoluteFill}
       />
       
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity 
           style={styles.profileXpContainer}
           onPress={() => router.push('/profile' as any)}
@@ -475,9 +475,11 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    gap: 10,
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(96, 165, 250, 0.2)',
   },
   profileXpContainer: {
     flexDirection: 'row',
@@ -488,9 +490,9 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   avatarSmall: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
@@ -502,9 +504,9 @@ const styles = StyleSheet.create({
     right: -4,
   },
   levelBadgeSmall: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
@@ -520,8 +522,8 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   progressBarBgSmall: {
-    width: 52,
-    height: 8,
+    width: 48,
+    height: 7,
     backgroundColor: 'rgba(0,0,0,0.5)',
     borderRadius: 4,
     overflow: 'hidden',
@@ -546,7 +548,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 4,
   },
   xpLabel: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '700' as const,
     color: '#c4b5fd',
   },
@@ -628,7 +630,7 @@ const styles = StyleSheet.create({
   },
   headerDivider: {
     width: 1,
-    height: 32,
+    height: 28,
     backgroundColor: 'rgba(96, 165, 250, 0.3)',
     marginHorizontal: 4,
   },
