@@ -11,6 +11,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BUTTON_SIZE = 56;
 const EDGE_PADDING = 16;
 const DAILY_COOLDOWN = 24 * 60 * 60 * 1000;
+const FIRST_OPEN_KEY = 'daily_popup_first_open';
 
 const DAILY_REWARDS = [
   { day: 1, gems: 10, money: 100 },
@@ -52,12 +53,13 @@ export default function FloatingGiftButton({ bottomOffset = 90 }: FloatingGiftBu
   const [rewardMoney, setRewardMoney] = useState(0);
   const [dailyTimer, setDailyTimer] = useState(0);
   const [isOnRight, setIsOnRight] = useState(true);
+  const [hasCheckedFirstOpen, setHasCheckedFirstOpen] = useState(false);
 
   const canClaim = canClaimDaily();
   const currentDay = Math.min(dailyStreak + (canClaim ? 1 : 0), 7);
 
   const defaultX = SCREEN_WIDTH - BUTTON_SIZE - EDGE_PADDING;
-  const defaultY = SCREEN_HEIGHT - bottomOffset - insets.bottom - BUTTON_SIZE - 40;
+  const defaultY = insets.top + 120;
   
   const initialX = giftButtonPosition?.x ?? defaultX;
   const initialY = giftButtonPosition?.y ?? defaultY;
@@ -155,6 +157,23 @@ export default function FloatingGiftButton({ bottomOffset = 90 }: FloatingGiftBu
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
   }, [dailyClaimed]);
+
+  useEffect(() => {
+    const checkFirstOpen = async () => {
+      if (hasCheckedFirstOpen) return;
+      
+      const hasOpened = await AsyncStorage.getItem(FIRST_OPEN_KEY);
+      if (!hasOpened) {
+        await AsyncStorage.setItem(FIRST_OPEN_KEY, 'true');
+        setTimeout(() => {
+          setShowDailyPopup(true);
+        }, 500);
+      }
+      setHasCheckedFirstOpen(true);
+    };
+    
+    checkFirstOpen();
+  }, [hasCheckedFirstOpen]);
 
   useEffect(() => {
     if (canClaim) {

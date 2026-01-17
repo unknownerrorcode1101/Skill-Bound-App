@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Platform, ScrollView, Modal, Pressable } from 'react-native';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gem, Clock, Sparkles } from 'lucide-react-native';
@@ -46,8 +46,10 @@ export default function RewardsScreen() {
   const [showSpinResult, setShowSpinResult] = useState(false);
   const [resultSegment, setResultSegment] = useState<typeof SLOT_ITEMS[0] | null>(null);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const [showWinPopup, setShowWinPopup] = useState(false);
 
   const scrollAnim = useRef(new Animated.Value(0)).current;
+  const winPopupScaleAnim = useRef(new Animated.Value(0)).current;
   const spinResultScaleAnim = useRef(new Animated.Value(0)).current;
   const spinGlowAnim = useRef(new Animated.Value(0)).current;
 
@@ -129,8 +131,18 @@ export default function RewardsScreen() {
         friction: 5,
         useNativeDriver: true,
       }).start();
+
+      setTimeout(() => {
+        setShowWinPopup(true);
+        winPopupScaleAnim.setValue(0);
+        Animated.spring(winPopupScaleAnim, {
+          toValue: 1,
+          friction: 6,
+          useNativeDriver: true,
+        }).start();
+      }, 200);
     });
-  }, [canSpin, isSpinning, scrollAnim, spinResultScaleAnim, addGems, addMoney, recordSpin]);
+  }, [canSpin, isSpinning, scrollAnim, spinResultScaleAnim, winPopupScaleAnim, addGems, addMoney, recordSpin]);
 
   const extendedItems = [...SLOT_ITEMS, ...SLOT_ITEMS, ...SLOT_ITEMS, ...SLOT_ITEMS, ...SLOT_ITEMS, ...SLOT_ITEMS];
 
@@ -328,6 +340,65 @@ export default function RewardsScreen() {
       </ScrollView>
 
       <FloatingGiftButton bottomOffset={90} />
+
+      <Modal
+        visible={showWinPopup}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowWinPopup(false)}
+      >
+        <Pressable 
+          style={styles.winModalOverlay}
+          onPress={() => setShowWinPopup(false)}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <Animated.View
+              style={[
+                styles.winModalContent,
+                { transform: [{ scale: winPopupScaleAnim }] },
+              ]}
+            >
+              <LinearGradient
+                colors={['#1e293b', '#0f172a']}
+                style={styles.winModalGradient}
+              >
+                <View style={styles.winModalHeader}>
+                  <Text style={styles.winModalEmoji}>🎉</Text>
+                  <Text style={styles.winModalTitle}>You Won!</Text>
+                </View>
+                
+                {resultSegment && (
+                  <View style={styles.winModalPrize}>
+                    {resultSegment.type === 'gems' ? (
+                      <>
+                        <Gem size={36} color="#60a5fa" fill="#60a5fa" />
+                        <Text style={styles.winModalAmount}>+{resultSegment.amount}</Text>
+                        <Text style={styles.winModalLabel}>Diamonds</Text>
+                      </>
+                    ) : (
+                      <>
+                        <View style={styles.winMoneyIcon}>
+                          <Text style={styles.winDollarIcon}>$</Text>
+                        </View>
+                        <Text style={styles.winModalAmountGreen}>+${resultSegment.amount}</Text>
+                        <Text style={styles.winModalLabel}>Cash</Text>
+                      </>
+                    )}
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  style={styles.awesomeButton}
+                  onPress={() => setShowWinPopup(false)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.awesomeButtonText}>AWESOME!</Text>
+                </TouchableOpacity>
+              </LinearGradient>
+            </Animated.View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -347,10 +418,12 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
   },
   title: {
     fontSize: 24,
+    textAlign: 'center' as const,
     fontWeight: '900' as const,
     color: '#fff',
     letterSpacing: 1,
@@ -360,6 +433,7 @@ const styles = StyleSheet.create({
     fontWeight: '500' as const,
     color: '#64748b',
     marginTop: 4,
+    textAlign: 'center' as const,
   },
   sectionDivider: {
     alignItems: 'center',
@@ -671,5 +745,90 @@ const styles = StyleSheet.create({
   },
   footerSpace: {
     height: 20,
+  },
+  winModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  winModalContent: {
+    width: 300,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  winModalGradient: {
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(34, 197, 94, 0.5)',
+    borderRadius: 20,
+  },
+  winModalHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  winModalEmoji: {
+    fontSize: 48,
+    marginBottom: 8,
+  },
+  winModalTitle: {
+    fontSize: 28,
+    fontWeight: '900' as const,
+    color: '#fbbf24',
+    letterSpacing: 1,
+  },
+  winModalPrize: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  winModalAmount: {
+    fontSize: 36,
+    fontWeight: '900' as const,
+    color: '#60a5fa',
+    marginTop: 8,
+  },
+  winModalAmountGreen: {
+    fontSize: 36,
+    fontWeight: '900' as const,
+    color: '#22c55e',
+    marginTop: 8,
+  },
+  winModalLabel: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#94a3b8',
+    marginTop: 4,
+  },
+  winMoneyIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#22c55e',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  winDollarIcon: {
+    fontSize: 24,
+    fontWeight: '900' as const,
+    color: '#fff',
+  },
+  awesomeButton: {
+    backgroundColor: '#22c55e',
+    paddingHorizontal: 48,
+    paddingVertical: 14,
+    borderRadius: 12,
+    shadowColor: '#22c55e',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  awesomeButtonText: {
+    fontSize: 16,
+    fontWeight: '900' as const,
+    color: '#fff',
+    letterSpacing: 1,
   },
 });

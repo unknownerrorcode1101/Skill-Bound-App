@@ -47,6 +47,7 @@ export default function TabLayout() {
           fontSize: 11,
           fontWeight: '700' as const,
           letterSpacing: 0.5,
+          textAlign: 'center' as const,
         },
       }}
     >
@@ -80,7 +81,7 @@ export default function TabLayout() {
             <View style={styles.playTabWrapper}>
               {focused && <View style={styles.playLeftBorder} />}
               <View style={[styles.playIconContainer, focused && styles.playIconActive]}>
-                <Gamepad2 color={focused ? '#fff' : color} size={26} />
+                <Gamepad2 color={focused ? '#fff' : color} size={22} />
               </View>
               {focused && <View style={styles.playRightBorder} />}
             </View>
@@ -89,6 +90,7 @@ export default function TabLayout() {
             fontSize: 12,
             fontWeight: '800' as const,
             letterSpacing: 1,
+            textAlign: 'center' as const,
           },
         }}
       />
@@ -167,13 +169,13 @@ const styles = StyleSheet.create({
     borderRadius: 1,
   },
   playIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: 'rgba(96, 165, 250, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -8,
+    marginTop: -6,
   },
   playIconActive: {
     backgroundColor: '#3b82f6',
@@ -182,6 +184,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 8,
     elevation: 8,
-    transform: [{ scale: 1.1 }],
+    transform: [{ scale: 1.05 }],
   },
 });
