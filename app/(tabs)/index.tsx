@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gem, Crown, Plus } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useGame } from '@/contexts/GameContext';
+import FloatingGiftButton from '@/components/FloatingGiftButton';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
@@ -463,6 +464,8 @@ export default function HomeScreen() {
           ))}
         </View>
       </ScrollView>
+
+      <FloatingGiftButton bottomOffset={90} />
     </View>
   );
 }

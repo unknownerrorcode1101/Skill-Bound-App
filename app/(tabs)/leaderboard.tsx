@@ -4,6 +4,7 @@ import { Crown, Trophy } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useGame } from '@/contexts/GameContext';
 import CurrencyHeader from '@/components/CurrencyHeader';
+import FloatingGiftButton from '@/components/FloatingGiftButton';
 
 const PLACEHOLDER_AVATARS = [
   'https://api.dicebear.com/7.x/bottts-neutral/png?seed=pixel&backgroundColor=b6e3f4',
@@ -187,6 +188,8 @@ export default function LeaderboardScreen() {
 
         <View style={styles.footerSpace} />
       </ScrollView>
+
+      <FloatingGiftButton bottomOffset={90} />
     </View>
   );
 }
