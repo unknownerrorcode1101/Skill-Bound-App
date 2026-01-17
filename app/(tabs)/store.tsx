@@ -962,6 +962,8 @@ const styles = StyleSheet.create({
   itemContent: {
     alignItems: 'center',
     paddingVertical: 8,
+    minHeight: 95,
+    justifyContent: 'center',
   },
   itemIconGreen: {
     width: 44,
