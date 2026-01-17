@@ -399,8 +399,10 @@ export default function StoreScreen() {
                     <DollarSign size={20} color="#22c55e" />
                   </View>
                   <Text style={styles.itemAmountGreen}>${item.amount}</Text>
-                  {item.bonus && (
+                  {item.bonus ? (
                     <Text style={styles.bonusText}>+${item.bonus} FREE</Text>
+                  ) : (
+                    <Text style={styles.placeholderText}>.</Text>
                   )}
                 </View>
                 <TouchableOpacity
@@ -448,8 +450,10 @@ export default function StoreScreen() {
                     <Gem size={20} color="#60a5fa" fill="#60a5fa" />
                   </View>
                   <Text style={styles.itemAmountBlue}>{item.amount}</Text>
-                  {item.bonus && (
+                  {item.bonus ? (
                     <Text style={styles.bonusTextBlue}>+{item.bonus} FREE</Text>
+                  ) : (
+                    <Text style={styles.placeholderText}>.</Text>
                   )}
                 </View>
                 <TouchableOpacity
@@ -1007,6 +1011,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700' as const,
     color: '#60a5fa',
+    marginTop: 4,
+  },
+  placeholderText: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    color: 'transparent',
     marginTop: 4,
   },
   buyButton: {
