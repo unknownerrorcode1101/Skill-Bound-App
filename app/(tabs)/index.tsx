@@ -149,6 +149,8 @@ export default function HomeScreen() {
           </View>
         </TouchableOpacity>
 
+        <View style={styles.headerDivider} />
+
         <View style={styles.currencyRow}>
           <Pressable 
             style={styles.currencyItem}
@@ -623,6 +625,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 2,
+  },
+  headerDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: 'rgba(96, 165, 250, 0.3)',
+    marginHorizontal: 4,
   },
 
   logoContainer: {
