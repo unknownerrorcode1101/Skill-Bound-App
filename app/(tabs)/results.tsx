@@ -84,12 +84,13 @@ const getGamePreview = (gameName: string) => {
 const formatMoney = (amount: number): string => {
   const absAmount = Math.abs(amount);
   if (absAmount >= 1000000) {
-    return (amount / 1000000).toFixed(1) + 'M';
+    const millions = amount / 1000000;
+    return millions.toFixed(2) + 'M';
   } else if (absAmount >= 1000) {
-    return (amount / 1000).toFixed(1) + 'K';
+    const thousands = amount / 1000;
+    return thousands.toFixed(2) + 'K';
   }
-  const rounded = Math.floor(amount * 100) / 100;
-  return rounded.toFixed(2);
+  return amount.toFixed(2);
 };
 
 const formatTimeAgo = (timestamp: number): string => {
@@ -134,6 +135,10 @@ export default function ResultsScreen() {
           <Text style={styles.title}>Results</Text>
         </View>
         <Text style={styles.subtitle}>Your game history</Text>
+      </View>
+
+      <View style={styles.sectionDivider}>
+        <View style={styles.dividerLine} />
       </View>
 
       <ScrollView 
@@ -229,6 +234,17 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     marginTop: 2,
     marginLeft: 32,
+  },
+  sectionDivider: {
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  dividerLine: {
+    width: '100%',
+    height: 3,
+    backgroundColor: 'rgba(96, 165, 250, 0.25)',
+    borderRadius: 2,
   },
   scrollView: {
     flex: 1,

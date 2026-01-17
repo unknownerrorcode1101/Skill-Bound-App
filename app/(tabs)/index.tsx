@@ -12,13 +12,11 @@ const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
 
 const formatCompact = (amount: number): string => {
   if (amount >= 1000000000) {
-    return `${(amount / 1000000000).toFixed(1)}B`;
+    return `${(amount / 1000000000).toFixed(2)}B`;
   } else if (amount >= 1000000) {
-    return `${(amount / 1000000).toFixed(1)}M`;
+    return `${(amount / 1000000).toFixed(2)}M`;
   } else if (amount >= 1000) {
-    return `${(amount / 1000).toFixed(1)}K`;
-  } else if (amount >= 100) {
-    return `${amount.toFixed(0)}`;
+    return `${(amount / 1000).toFixed(2)}K`;
   }
   return `${amount.toFixed(2)}`;
 };

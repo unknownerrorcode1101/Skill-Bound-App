@@ -244,6 +244,10 @@ export default function StoreScreen() {
         <Text style={styles.headerTitle}>STORE</Text>
       </View>
 
+      <View style={styles.sectionDivider}>
+        <View style={styles.dividerLine} />
+      </View>
+
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -676,6 +680,17 @@ const styles = StyleSheet.create({
     fontWeight: '900' as const,
     color: '#fff',
     letterSpacing: 2,
+  },
+  sectionDivider: {
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  dividerLine: {
+    width: '100%',
+    height: 3,
+    backgroundColor: 'rgba(96, 165, 250, 0.25)',
+    borderRadius: 2,
   },
   scrollView: {
     flex: 1,

@@ -104,6 +104,10 @@ export default function LeaderboardScreen() {
         <Text style={styles.subtitle}>Compete for the top spot!</Text>
       </View>
 
+      <View style={styles.sectionDivider}>
+        <View style={styles.dividerLine} />
+      </View>
+
       <ScrollView 
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
@@ -222,6 +226,17 @@ const styles = StyleSheet.create({
     fontWeight: '500' as const,
     color: '#64748b',
     marginTop: 4,
+  },
+  sectionDivider: {
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  dividerLine: {
+    width: '100%',
+    height: 3,
+    backgroundColor: 'rgba(96, 165, 250, 0.25)',
+    borderRadius: 2,
   },
   content: {
     flex: 1,
