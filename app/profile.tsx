@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Crown, ChevronLeft, Trophy, DollarSign, Gamepad2, TrendingUp, Award, Zap, ChevronRight, Camera, ImageIcon, X, Trash2, Pencil, Check } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useGame } from '@/contexts/GameContext';
+import CurrencyHeader from '@/components/CurrencyHeader';
 
 const PRESET_AVATARS = [
   'https://r2-pub.rork.com/generated-images/fdbb28f5-161e-4516-81ab-88f2f2ce916e.png',
@@ -96,11 +97,15 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1a2744', '#0f172a', '#1a2744']}
+        colors={['#0f172a', '#1e3a5f', '#0f172a']}
         style={StyleSheet.absoluteFill}
       />
 
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <CurrencyHeader />
+      </View>
+
+      <View style={styles.titleSection}>
         <TouchableOpacity 
           style={styles.backButton} 
           onPress={() => router.back()}
@@ -393,9 +398,12 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a2744',
+    backgroundColor: '#0f172a',
   },
   header: {
+    paddingHorizontal: 0,
+  },
+  titleSection: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,

@@ -109,7 +109,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1a2744', '#243555', '#1a2744']}
+        colors={['#0f172a', '#1e3a5f', '#0f172a']}
         style={StyleSheet.absoluteFill}
       />
       
@@ -470,7 +470,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a2744',
+    backgroundColor: '#0f172a',
   },
   header: {
     flexDirection: 'row',

@@ -4,6 +4,7 @@ import { useGame } from '@/contexts/GameContext';
 import { Trophy, XCircle, Coins, Clock, Gamepad2, MinusCircle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect } from 'react';
+import CurrencyHeader from '@/components/CurrencyHeader';
 
 const BrickBreakerPreview = () => (
   <LinearGradient colors={['#1e1b4b', '#312e81', '#1e1b4b']} style={styles.gameImagePreview}>
@@ -119,11 +120,15 @@ export default function ResultsScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1a2744', '#243555', '#1a2744']}
+        colors={['#0f172a', '#1e3a5f', '#0f172a']}
         style={StyleSheet.absoluteFill}
       />
       
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <CurrencyHeader />
+      </View>
+
+      <View style={styles.titleSection}>
         <View style={styles.titleRow}>
           <Trophy size={24} color="#fbbf24" />
           <Text style={styles.title}>Results</Text>
@@ -199,9 +204,12 @@ export default function ResultsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a2744',
+    backgroundColor: '#0f172a',
   },
   header: {
+    paddingHorizontal: 0,
+  },
+  titleSection: {
     paddingHorizontal: 16,
     paddingBottom: 12,
   },

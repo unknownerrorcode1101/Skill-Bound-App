@@ -5,30 +5,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Gem, DollarSign, Check, Gift, Play, Clock, Ticket, ArrowDownCircle, CreditCard, X, Sparkles } from 'lucide-react-native';
 import { useGame } from '@/contexts/GameContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import CurrencyHeader from '@/components/CurrencyHeader';
 
-const formatCompact = (amount: number): string => {
-  if (amount >= 1000000000) {
-    return `${(amount / 1000000000).toFixed(1)}B`;
-  } else if (amount >= 1000000) {
-    return `${(amount / 1000000).toFixed(1)}M`;
-  } else if (amount >= 1000) {
-    return `${(amount / 1000).toFixed(1)}K`;
-  } else if (amount >= 100) {
-    return `${amount.toFixed(0)}`;
-  }
-  return `${amount.toFixed(2)}`;
-};
 
-const formatGemsCompact = (amount: number): string => {
-  if (amount >= 1000000000) {
-    return `${(amount / 1000000000).toFixed(1)}B`;
-  } else if (amount >= 1000000) {
-    return `${(amount / 1000000).toFixed(1)}M`;
-  } else if (amount >= 1000) {
-    return `${(amount / 1000).toFixed(1)}K`;
-  }
-  return amount.toString();
-};
 
 interface PurchaseItem {
   id: string;
@@ -68,7 +47,6 @@ export default function StoreScreen() {
   const { 
     addMoney, 
     addGems, 
-    gems, 
     money,
     canWatchAd,
     getAdCooldownRemaining,
@@ -257,21 +235,13 @@ export default function StoreScreen() {
         style={StyleSheet.absoluteFill}
       />
       
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <View style={styles.headerTitleRow}>
-          <Sparkles size={24} color="#fbbf24" />
-          <Text style={styles.headerTitle}>STORE</Text>
-        </View>
-        <View style={styles.balanceRow}>
-          <View style={styles.balanceItem}>
-            <Gem size={18} color="#60a5fa" fill="#60a5fa" />
-            <Text style={styles.balanceText} numberOfLines={1}>{formatGemsCompact(gems)}</Text>
-          </View>
-          <View style={styles.balanceItemGreen}>
-            <Text style={styles.dollarIcon}>$</Text>
-            <Text style={styles.balanceText} numberOfLines={1}>{formatCompact(money)}</Text>
-          </View>
-        </View>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <CurrencyHeader showDivider={false} />
+      </View>
+
+      <View style={styles.titleSection}>
+        <Sparkles size={24} color="#fbbf24" />
+        <Text style={styles.headerTitle}>STORE</Text>
       </View>
 
       <ScrollView 
@@ -688,58 +658,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f172a',
   },
   header: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: 0,
   },
-  headerTitleRow: {
+  titleSection: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
   headerTitle: {
     fontSize: 26,
     fontWeight: '900' as const,
     color: '#fff',
     letterSpacing: 2,
-  },
-  balanceRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  balanceItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.3)',
-    minWidth: 95,
-  },
-  balanceItemGreen: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(34, 197, 94, 0.3)',
-    minWidth: 95,
-  },
-  dollarIcon: {
-    fontSize: 14,
-    fontWeight: '800' as const,
-    color: '#22c55e',
-  },
-  balanceText: {
-    fontSize: 16,
-    fontWeight: '800' as const,
-    color: '#fff',
   },
   scrollView: {
     flex: 1,

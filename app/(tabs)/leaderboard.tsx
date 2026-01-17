@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Crown, Trophy } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useGame } from '@/contexts/GameContext';
+import CurrencyHeader from '@/components/CurrencyHeader';
 
 const PLACEHOLDER_AVATARS = [
   'https://api.dicebear.com/7.x/bottts-neutral/png?seed=pixel&backgroundColor=b6e3f4',
@@ -86,11 +87,15 @@ export default function LeaderboardScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1a2744', '#0f172a', '#1a2744']}
+        colors={['#0f172a', '#1e3a5f', '#0f172a']}
         style={StyleSheet.absoluteFill}
       />
       
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <CurrencyHeader />
+      </View>
+
+      <View style={styles.titleSection}>
         <View style={styles.titleRow}>
           <Trophy size={24} color="#fbbf24" />
           <Text style={styles.title}>Leaderboard</Text>
@@ -189,9 +194,12 @@ export default function LeaderboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a2744',
+    backgroundColor: '#0f172a',
   },
   header: {
+    paddingHorizontal: 0,
+  },
+  titleSection: {
     paddingHorizontal: 16,
     paddingBottom: 12,
   },

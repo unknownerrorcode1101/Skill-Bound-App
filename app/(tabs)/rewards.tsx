@@ -1,14 +1,16 @@
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Platform, ScrollView, Modal, Pressable } from 'react-native';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Gem, Gift, Check, Flame, Star, Clock, Sparkles } from 'lucide-react-native';
+import { Gem, Gift, Check, Flame, Star, Clock, Sparkles, X, Crown } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useGame } from '@/contexts/GameContext';
 import * as Haptics from 'expo-haptics';
 import Svg, { Path, Text as SvgText } from 'react-native-svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import CurrencyHeader from '@/components/CurrencyHeader';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const WHEEL_SIZE = Math.min(SCREEN_WIDTH - 100, 240);
+const WHEEL_SIZE = Math.min(SCREEN_WIDTH - 100, 280);
 const WHEEL_RADIUS = WHEEL_SIZE / 2;
 
 const DAILY_REWARDS = [
@@ -31,6 +33,8 @@ const WHEEL_SEGMENTS = [
   { id: 7, type: 'gems', amount: 50, color: '#1d4ed8', label: '💎 50' },
   { id: 8, type: 'money', amount: 500, color: '#166534', label: '$500' },
 ];
+
+const DAILY_COOLDOWN = 24 * 60 * 60 * 1000;
 
 const createPieSlice = (index: number, total: number, radius: number) => {
   const anglePerSlice = (2 * Math.PI) / total;
@@ -66,6 +70,13 @@ const formatTime = (ms: number): string => {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
+const formatDailyTimer = (ms: number): string => {
+  const hours = Math.floor(ms / (1000 * 60 * 60));
+  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
+
 export default function RewardsScreen() {
   const insets = useSafeAreaInsets();
   const { 
@@ -79,32 +90,62 @@ export default function RewardsScreen() {
     recordSpin
   } = useGame();
 
-  const [activeTab, setActiveTab] = useState<'daily' | 'spin'>('daily');
-  
-  // Daily rewards state
+  const [showDailyPopup, setShowDailyPopup] = useState(false);
   const [dailyClaimed, setDailyClaimed] = useState(false);
   const [showDailyReward, setShowDailyReward] = useState(false);
   const [rewardGems, setRewardGems] = useState(0);
   const [rewardMoney, setRewardMoney] = useState(0);
+  const [dailyTimer, setDailyTimer] = useState(0);
   
-  // Spin state
   const [isSpinning, setIsSpinning] = useState(false);
   const [showSpinResult, setShowSpinResult] = useState(false);
   const [resultSegment, setResultSegment] = useState<typeof WHEEL_SEGMENTS[0] | null>(null);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
-  // Animations
   const dailyScaleAnim = useRef(new Animated.Value(1)).current;
   const dailyGlowAnim = useRef(new Animated.Value(0)).current;
   const dailyRewardScaleAnim = useRef(new Animated.Value(0)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const spinResultScaleAnim = useRef(new Animated.Value(0)).current;
   const spinGlowAnim = useRef(new Animated.Value(0)).current;
+  const floatingButtonPulse = useRef(new Animated.Value(1)).current;
 
   const canClaim = canClaimDaily();
 
   useEffect(() => {
-    if (canClaim && activeTab === 'daily') {
+    const checkAndShowDaily = async () => {
+      const hasSeenToday = await AsyncStorage.getItem('daily_popup_shown_today');
+      const today = new Date().toDateString();
+      
+      if (canClaim && hasSeenToday !== today) {
+        setShowDailyPopup(true);
+        await AsyncStorage.setItem('daily_popup_shown_today', today);
+      }
+    };
+    
+    checkAndShowDaily();
+  }, [canClaim]);
+
+  useEffect(() => {
+    const updateTimer = async () => {
+      const lastClaim = await AsyncStorage.getItem('last_daily_claim_time');
+      if (lastClaim) {
+        const elapsed = Date.now() - parseInt(lastClaim, 10);
+        if (elapsed < DAILY_COOLDOWN) {
+          setDailyTimer(DAILY_COOLDOWN - elapsed);
+        } else {
+          setDailyTimer(0);
+        }
+      }
+    };
+    
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [dailyClaimed]);
+
+  useEffect(() => {
+    if (canClaim) {
       Animated.loop(
         Animated.sequence([
           Animated.timing(dailyGlowAnim, {
@@ -120,7 +161,24 @@ export default function RewardsScreen() {
         ])
       ).start();
     }
-  }, [canClaim, activeTab, dailyGlowAnim]);
+  }, [canClaim, dailyGlowAnim]);
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatingButtonPulse, {
+          toValue: 1.1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatingButtonPulse, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [floatingButtonPulse]);
 
   useEffect(() => {
     const updateCooldown = () => {
@@ -134,7 +192,7 @@ export default function RewardsScreen() {
   }, [getSpinCooldownRemaining]);
 
   useEffect(() => {
-    if (canSpin && !isSpinning && activeTab === 'spin') {
+    if (canSpin && !isSpinning) {
       Animated.loop(
         Animated.sequence([
           Animated.timing(spinGlowAnim, {
@@ -152,9 +210,9 @@ export default function RewardsScreen() {
     } else {
       spinGlowAnim.setValue(0);
     }
-  }, [canSpin, isSpinning, activeTab, spinGlowAnim]);
+  }, [canSpin, isSpinning, spinGlowAnim]);
 
-  const handleClaimDaily = () => {
+  const handleClaimDaily = async () => {
     if (!canClaim || dailyClaimed) return;
 
     if (Platform.OS !== 'web') {
@@ -170,6 +228,8 @@ export default function RewardsScreen() {
     addGems(reward.gems);
     addMoney(reward.money);
     setDailyClaimed(true);
+
+    await AsyncStorage.setItem('last_daily_claim_time', Date.now().toString());
 
     Animated.sequence([
       Animated.timing(dailyScaleAnim, {
@@ -253,34 +313,20 @@ export default function RewardsScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1a2744', '#243555', '#1a2744']}
+        colors={['#0f172a', '#1e3a5f', '#0f172a']}
         style={StyleSheet.absoluteFill}
       />
       
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <CurrencyHeader />
+      </View>
+
+      <View style={styles.titleSection}>
         <View style={styles.titleRow}>
-          <Gift size={24} color="#fbbf24" />
-          <Text style={styles.title}>Rewards</Text>
+          <Sparkles size={24} color="#fbbf24" />
+          <Text style={styles.title}>Lucky Spin</Text>
         </View>
-        
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'daily' && styles.tabActive]}
-            onPress={() => setActiveTab('daily')}
-          >
-            <Gift size={18} color={activeTab === 'daily' ? '#fbbf24' : '#64748b'} />
-            <Text style={[styles.tabText, activeTab === 'daily' && styles.tabTextActive]}>Daily</Text>
-            {canClaim && <View style={styles.notificationDot} />}
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'spin' && styles.tabActive]}
-            onPress={() => setActiveTab('spin')}
-          >
-            <Sparkles size={18} color={activeTab === 'spin' ? '#fbbf24' : '#64748b'} />
-            <Text style={[styles.tabText, activeTab === 'spin' && styles.tabTextActive]}>Spin</Text>
-            {canSpin && <View style={styles.notificationDot} />}
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.subtitle}>Spin to win amazing rewards!</Text>
       </View>
 
       <ScrollView 
@@ -288,275 +334,337 @@ export default function RewardsScreen() {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        {activeTab === 'daily' ? (
-          <>
-            <View style={styles.streakContainer}>
-              <Flame size={18} color="#f97316" fill="#f97316" />
-              <Text style={styles.streakText}>{dailyStreak} Day Streak</Text>
-            </View>
+        {!canSpin && (
+          <View style={styles.cooldownContainer}>
+            <Clock size={16} color="#94a3b8" />
+            <Text style={styles.cooldownText}>Next spin in {formatTime(cooldownRemaining)}</Text>
+          </View>
+        )}
 
-            <View style={styles.rewardsGrid}>
-              {DAILY_REWARDS.map((reward, index) => {
-                const isCurrentDay = index + 1 === currentDay;
-                const isPast = index + 1 < currentDay || (index + 1 === currentDay && !canClaim);
-                const isLocked = index + 1 > currentDay;
-
-                return (
-                  <View
-                    key={reward.day}
-                    style={[
-                      styles.rewardCard,
-                      isCurrentDay && canClaim && styles.rewardCardActive,
-                      isPast && styles.rewardCardClaimed,
-                      isLocked && styles.rewardCardLocked,
-                    ]}
-                  >
-                    {isPast && (
-                      <View style={styles.claimedOverlay}>
-                        <Check size={20} color="#22c55e" strokeWidth={3} />
-                      </View>
-                    )}
-                    <Text style={[styles.dayText, isLocked && styles.dayTextLocked]}>
-                      Day {reward.day}
-                    </Text>
-                    <View style={styles.rewardItems}>
-                      <View style={styles.rewardItem}>
-                        <Gem size={14} color={isLocked ? '#475569' : '#60a5fa'} fill={isLocked ? '#475569' : '#60a5fa'} />
-                        <Text style={[styles.rewardAmount, isLocked && styles.rewardAmountLocked]}>
-                          {reward.gems}
-                        </Text>
-                      </View>
-                      <View style={styles.rewardItem}>
-                        <Text style={[styles.moneyIcon, isLocked && styles.moneyIconLocked]}>$</Text>
-                        <Text style={[styles.rewardAmount, isLocked && styles.rewardAmountLocked]}>
-                          {reward.money}
-                        </Text>
-                      </View>
-                    </View>
-                    {reward.day === 7 && (
-                      <View style={styles.bonusBadge}>
-                        <Star size={8} color="#fbbf24" fill="#fbbf24" />
-                        <Text style={styles.bonusText}>BONUS</Text>
-                      </View>
-                    )}
-                  </View>
-                );
-              })}
-            </View>
-
-            <Animated.View style={[styles.claimButtonContainer, { transform: [{ scale: dailyScaleAnim }] }]}>
-              <TouchableOpacity
-                style={[styles.claimButton, !canClaim && styles.claimButtonDisabled]}
-                onPress={handleClaimDaily}
-                activeOpacity={0.8}
-                disabled={!canClaim || dailyClaimed}
-              >
-                <Animated.View
-                  style={[
-                    styles.claimButtonGlow,
-                    {
-                      opacity: dailyGlowAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0.3, 0.8],
-                      }),
-                    },
-                  ]}
-                />
+        <View style={styles.wheelSection}>
+          <View style={styles.wheelContainerOuter}>
+            <Animated.View
+              style={[
+                styles.wheelGlow,
+                {
+                  opacity: spinGlowAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.2, 0.5],
+                  }),
+                },
+              ]}
+            />
+            <Animated.View
+              style={[
+                styles.wheel,
+                { transform: [{ rotate: spin }] },
+              ]}
+            >
+              <Svg width={WHEEL_SIZE} height={WHEEL_SIZE}>
+                {WHEEL_SEGMENTS.map((segment, index) => (
+                  <Path
+                    key={segment.id}
+                    d={createPieSlice(index, WHEEL_SEGMENTS.length, WHEEL_RADIUS)}
+                    fill={segment.color}
+                    stroke="#0f172a"
+                    strokeWidth={2}
+                  />
+                ))}
+                {WHEEL_SEGMENTS.map((segment, index) => {
+                  const pos = getLabelPosition(index, WHEEL_SEGMENTS.length, WHEEL_RADIUS);
+                  return (
+                    <SvgText
+                      key={`label-${segment.id}`}
+                      x={pos.x}
+                      y={pos.y}
+                      fill="#fff"
+                      fontSize={11}
+                      fontWeight="bold"
+                      textAnchor="middle"
+                      alignmentBaseline="middle"
+                      transform={`rotate(${pos.rotation}, ${pos.x}, ${pos.y})`}
+                    >
+                      {segment.label}
+                    </SvgText>
+                  );
+                })}
+              </Svg>
+              
+              <View style={styles.wheelCenter}>
                 <LinearGradient
-                  colors={canClaim ? ['#fbbf24', '#f59e0b'] : ['#475569', '#374151']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.claimButtonGradient}
+                  colors={['#fbbf24', '#f59e0b']}
+                  style={styles.wheelCenterGradient}
                 >
-                  {canClaim ? (
-                    <>
-                      <Gift size={22} color="#000" />
-                      <Text style={styles.claimButtonText}>CLAIM REWARD</Text>
-                    </>
-                  ) : (
-                    <>
-                      <Check size={22} color="#9ca3af" />
-                      <Text style={styles.claimButtonTextDisabled}>CLAIMED TODAY</Text>
-                    </>
-                  )}
+                  <Text style={styles.wheelCenterText}>SPIN</Text>
                 </LinearGradient>
-              </TouchableOpacity>
+              </View>
             </Animated.View>
 
-            {showDailyReward && (
-              <Animated.View
-                style={[
-                  styles.rewardPopup,
-                  { transform: [{ scale: dailyRewardScaleAnim }] },
-                ]}
-              >
-                <LinearGradient
-                  colors={['#1e293b', '#0f172a']}
-                  style={styles.rewardPopupGradient}
-                >
-                  <Text style={styles.rewardPopupTitle}>Rewards Claimed!</Text>
-                  <View style={styles.rewardPopupItems}>
-                    <View style={styles.rewardPopupItem}>
-                      <Gem size={22} color="#60a5fa" fill="#60a5fa" />
-                      <Text style={styles.rewardPopupAmount}>+{rewardGems}</Text>
-                    </View>
-                    <View style={styles.rewardPopupItem}>
-                      <View style={styles.moneyIconLarge}>
-                        <Text style={styles.dollarIconLarge}>$</Text>
-                      </View>
-                      <Text style={styles.rewardPopupAmountGreen}>+{rewardMoney}</Text>
-                    </View>
-                  </View>
-                </LinearGradient>
-              </Animated.View>
-            )}
-          </>
-        ) : (
-          <>
-            {!canSpin && (
-              <View style={styles.cooldownContainer}>
-                <Clock size={16} color="#94a3b8" />
-                <Text style={styles.cooldownText}>Next spin in {formatTime(cooldownRemaining)}</Text>
-              </View>
-            )}
-
-            <View style={styles.wheelSection}>
-              <View style={styles.wheelContainerOuter}>
-                <Animated.View
-                  style={[
-                    styles.wheelGlow,
-                    {
-                      opacity: spinGlowAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0.2, 0.5],
-                      }),
-                    },
-                  ]}
-                />
-                <Animated.View
-                  style={[
-                    styles.wheel,
-                    { transform: [{ rotate: spin }] },
-                  ]}
-                >
-                  <Svg width={WHEEL_SIZE} height={WHEEL_SIZE}>
-                    {WHEEL_SEGMENTS.map((segment, index) => (
-                      <Path
-                        key={segment.id}
-                        d={createPieSlice(index, WHEEL_SEGMENTS.length, WHEEL_RADIUS)}
-                        fill={segment.color}
-                        stroke="#0f172a"
-                        strokeWidth={2}
-                      />
-                    ))}
-                    {WHEEL_SEGMENTS.map((segment, index) => {
-                      const pos = getLabelPosition(index, WHEEL_SEGMENTS.length, WHEEL_RADIUS);
-                      return (
-                        <SvgText
-                          key={`label-${segment.id}`}
-                          x={pos.x}
-                          y={pos.y}
-                          fill="#fff"
-                          fontSize={10}
-                          fontWeight="bold"
-                          textAnchor="middle"
-                          alignmentBaseline="middle"
-                          transform={`rotate(${pos.rotation}, ${pos.x}, ${pos.y})`}
-                        >
-                          {segment.label}
-                        </SvgText>
-                      );
-                    })}
-                  </Svg>
-                  
-                  <View style={styles.wheelCenter}>
-                    <LinearGradient
-                      colors={['#fbbf24', '#f59e0b']}
-                      style={styles.wheelCenterGradient}
-                    >
-                      <Text style={styles.wheelCenterText}>SPIN</Text>
-                    </LinearGradient>
-                  </View>
-                </Animated.View>
-
-                <View style={styles.pointer}>
-                  <View style={styles.pointerTriangle} />
-                </View>
-              </View>
+            <View style={styles.pointer}>
+              <View style={styles.pointerTriangle} />
             </View>
+          </View>
+        </View>
 
-            <TouchableOpacity
-              style={[styles.spinButton, (!canSpin || isSpinning) && styles.spinButtonDisabled]}
-              onPress={handleSpin}
-              activeOpacity={0.8}
-              disabled={!canSpin || isSpinning}
+        <TouchableOpacity
+          style={[styles.spinButton, (!canSpin || isSpinning) && styles.spinButtonDisabled]}
+          onPress={handleSpin}
+          activeOpacity={0.8}
+          disabled={!canSpin || isSpinning}
+        >
+          <LinearGradient
+            colors={canSpin && !isSpinning ? ['#fbbf24', '#f59e0b'] : ['#475569', '#374151']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.spinButtonGradient}
+          >
+            <Sparkles size={22} color={canSpin && !isSpinning ? '#000' : '#9ca3af'} />
+            <Text style={[styles.spinButtonText, (!canSpin || isSpinning) && styles.spinButtonTextDisabled]}>
+              {isSpinning ? 'SPINNING...' : canSpin ? 'SPIN NOW!' : 'COOLDOWN'}
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {showSpinResult && resultSegment && (
+          <Animated.View
+            style={[
+              styles.spinResultContainer,
+              { transform: [{ scale: spinResultScaleAnim }] },
+            ]}
+          >
+            <LinearGradient
+              colors={['#1e293b', '#0f172a']}
+              style={styles.spinResultGradient}
             >
-              <LinearGradient
-                colors={canSpin && !isSpinning ? ['#fbbf24', '#f59e0b'] : ['#475569', '#374151']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.spinButtonGradient}
-              >
-                <Sparkles size={22} color={canSpin && !isSpinning ? '#000' : '#9ca3af'} />
-                <Text style={[styles.spinButtonText, (!canSpin || isSpinning) && styles.spinButtonTextDisabled]}>
-                  {isSpinning ? 'SPINNING...' : canSpin ? 'SPIN NOW!' : 'COOLDOWN'}
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-
-            {showSpinResult && resultSegment && (
-              <Animated.View
-                style={[
-                  styles.spinResultContainer,
-                  { transform: [{ scale: spinResultScaleAnim }] },
-                ]}
-              >
-                <LinearGradient
-                  colors={['#1e293b', '#0f172a']}
-                  style={styles.spinResultGradient}
-                >
-                  <Text style={styles.spinResultTitle}>You Won!</Text>
-                  <View style={styles.spinResultContent}>
-                    {resultSegment.type === 'gems' ? (
-                      <>
-                        <Gem size={28} color="#60a5fa" fill="#60a5fa" />
-                        <Text style={styles.spinResultAmount}>+{resultSegment.amount}</Text>
-                      </>
-                    ) : (
-                      <>
-                        <View style={styles.moneyIconLarge}>
-                          <Text style={styles.dollarIconLarge}>$</Text>
-                        </View>
-                        <Text style={styles.spinResultAmountGreen}>+${resultSegment.amount}</Text>
-                      </>
-                    )}
-                  </View>
-                </LinearGradient>
-              </Animated.View>
-            )}
-
-            <View style={styles.prizesInfo}>
-              <Text style={styles.prizesTitle}>Possible Prizes</Text>
-              <View style={styles.prizesGrid}>
-                {WHEEL_SEGMENTS.map((segment) => (
-                  <View key={segment.id} style={[styles.prizeItem, { borderColor: segment.color }]}>
-                    {segment.type === 'gems' ? (
-                      <Gem size={12} color="#60a5fa" fill="#60a5fa" />
-                    ) : (
-                      <Text style={styles.prizeMoneyIcon}>$</Text>
-                    )}
-                    <Text style={styles.prizeText}>
-                      {segment.type === 'gems' ? segment.amount : segment.amount}
-                    </Text>
-                  </View>
-                ))}
+              <Text style={styles.spinResultTitle}>You Won!</Text>
+              <View style={styles.spinResultContent}>
+                {resultSegment.type === 'gems' ? (
+                  <>
+                    <Gem size={28} color="#60a5fa" fill="#60a5fa" />
+                    <Text style={styles.spinResultAmount}>+{resultSegment.amount}</Text>
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.moneyIconLarge}>
+                      <Text style={styles.dollarIconLarge}>$</Text>
+                    </View>
+                    <Text style={styles.spinResultAmountGreen}>+${resultSegment.amount}</Text>
+                  </>
+                )}
               </View>
-            </View>
-          </>
+            </LinearGradient>
+          </Animated.View>
         )}
+
+        <View style={styles.prizesInfo}>
+          <Text style={styles.prizesTitle}>Possible Prizes</Text>
+          <View style={styles.prizesGrid}>
+            {WHEEL_SEGMENTS.map((segment) => (
+              <View key={segment.id} style={[styles.prizeItem, { borderColor: segment.color }]}>
+                {segment.type === 'gems' ? (
+                  <Gem size={12} color="#60a5fa" fill="#60a5fa" />
+                ) : (
+                  <Text style={styles.prizeMoneyIcon}>$</Text>
+                )}
+                <Text style={styles.prizeText}>
+                  {segment.type === 'gems' ? segment.amount : segment.amount}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
 
         <View style={styles.footerSpace} />
       </ScrollView>
+
+      <TouchableOpacity 
+        style={[styles.floatingDailyButton, { bottom: insets.bottom + 90 }]}
+        onPress={() => setShowDailyPopup(true)}
+        activeOpacity={0.9}
+      >
+        <Animated.View style={[styles.floatingButtonInner, { transform: [{ scale: canClaim ? floatingButtonPulse : 1 }] }]}>
+          <LinearGradient
+            colors={canClaim ? ['#fbbf24', '#f59e0b'] : ['#475569', '#374151']}
+            style={styles.floatingButtonGradient}
+          >
+            <Gift size={20} color={canClaim ? '#000' : '#9ca3af'} />
+            {canClaim && <View style={styles.floatingNotificationDot} />}
+          </LinearGradient>
+        </Animated.View>
+        {!canClaim && dailyTimer > 0 && (
+          <View style={styles.floatingTimerBadge}>
+            <Text style={styles.floatingTimerText}>{formatDailyTimer(dailyTimer)}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+
+      <Modal
+        visible={showDailyPopup}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDailyPopup(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay}
+          onPress={() => !showDailyReward && setShowDailyPopup(false)}
+        >
+          <Pressable style={styles.dailyModalContent} onPress={(e) => e.stopPropagation()}>
+            <LinearGradient
+              colors={['#1e293b', '#0f172a']}
+              style={styles.dailyModalGradient}
+            >
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setShowDailyPopup(false)}
+              >
+                <X size={24} color="#64748b" />
+              </TouchableOpacity>
+
+              <View style={styles.dailyModalHeader}>
+                <Gift size={32} color="#fbbf24" />
+                <Text style={styles.dailyModalTitle}>Daily Rewards</Text>
+              </View>
+
+              <View style={styles.streakContainer}>
+                <Flame size={18} color="#f97316" fill="#f97316" />
+                <Text style={styles.streakText}>{dailyStreak} Day Streak</Text>
+              </View>
+
+              <View style={styles.rewardsGrid}>
+                {DAILY_REWARDS.map((reward, index) => {
+                  const isCurrentDay = index + 1 === currentDay;
+                  const isPast = index + 1 < currentDay || (index + 1 === currentDay && !canClaim);
+                  const isLocked = index + 1 > currentDay;
+                  const isDay7 = reward.day === 7;
+
+                  return (
+                    <View
+                      key={reward.day}
+                      style={[
+                        styles.rewardCard,
+                        isCurrentDay && canClaim && styles.rewardCardActive,
+                        isPast && styles.rewardCardClaimed,
+                        isLocked && styles.rewardCardLocked,
+                        isDay7 && styles.rewardCardDay7,
+                      ]}
+                    >
+                      {isPast && (
+                        <View style={styles.claimedOverlay}>
+                          <Check size={16} color="#22c55e" strokeWidth={3} />
+                        </View>
+                      )}
+                      {isDay7 && (
+                        <View style={styles.day7Crown}>
+                          <Crown size={14} color="#fbbf24" fill="#fbbf24" />
+                        </View>
+                      )}
+                      <Text style={[styles.dayText, isLocked && styles.dayTextLocked]}>
+                        Day {reward.day}
+                      </Text>
+                      <View style={styles.rewardItems}>
+                        <View style={styles.rewardItem}>
+                          <Gem size={12} color={isLocked ? '#475569' : '#60a5fa'} fill={isLocked ? '#475569' : '#60a5fa'} />
+                          <Text style={[styles.rewardAmount, isLocked && styles.rewardAmountLocked]}>
+                            {reward.gems}
+                          </Text>
+                        </View>
+                        <View style={styles.rewardItem}>
+                          <Text style={[styles.moneyIcon, isLocked && styles.moneyIconLocked]}>$</Text>
+                          <Text style={[styles.rewardAmount, isLocked && styles.rewardAmountLocked]}>
+                            {reward.money}
+                          </Text>
+                        </View>
+                      </View>
+                      {isDay7 && (
+                        <View style={styles.bonusBadge}>
+                          <Star size={8} color="#fbbf24" fill="#fbbf24" />
+                          <Text style={styles.bonusText}>JACKPOT</Text>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+
+              <Animated.View style={[styles.claimButtonContainer, { transform: [{ scale: dailyScaleAnim }] }]}>
+                <TouchableOpacity
+                  style={[styles.claimButton, !canClaim && styles.claimButtonDisabled]}
+                  onPress={handleClaimDaily}
+                  activeOpacity={0.8}
+                  disabled={!canClaim || dailyClaimed}
+                >
+                  <Animated.View
+                    style={[
+                      styles.claimButtonGlow,
+                      {
+                        opacity: dailyGlowAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0.3, 0.8],
+                        }),
+                      },
+                    ]}
+                  />
+                  <LinearGradient
+                    colors={canClaim ? ['#fbbf24', '#f59e0b'] : ['#475569', '#374151']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.claimButtonGradient}
+                  >
+                    {canClaim ? (
+                      <>
+                        <Gift size={22} color="#000" />
+                        <Text style={styles.claimButtonText}>CLAIM REWARD</Text>
+                      </>
+                    ) : (
+                      <>
+                        <Clock size={22} color="#9ca3af" />
+                        <Text style={styles.claimButtonTextDisabled}>{formatDailyTimer(dailyTimer)}</Text>
+                      </>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+              </Animated.View>
+
+              {showDailyReward && (
+                <Animated.View
+                  style={[
+                    styles.rewardPopup,
+                    { transform: [{ scale: dailyRewardScaleAnim }] },
+                  ]}
+                >
+                  <LinearGradient
+                    colors={['#1e293b', '#0f172a']}
+                    style={styles.rewardPopupGradient}
+                  >
+                    <Text style={styles.rewardPopupTitle}>Rewards Claimed!</Text>
+                    <View style={styles.rewardPopupItems}>
+                      <View style={styles.rewardPopupItem}>
+                        <Gem size={22} color="#60a5fa" fill="#60a5fa" />
+                        <Text style={styles.rewardPopupAmount}>+{rewardGems}</Text>
+                      </View>
+                      <View style={styles.rewardPopupItem}>
+                        <View style={styles.moneyIconLarge}>
+                          <Text style={styles.dollarIconLarge}>$</Text>
+                        </View>
+                        <Text style={styles.rewardPopupAmountGreen}>+{rewardMoney}</Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.closeRewardButton}
+                      onPress={() => {
+                        setShowDailyReward(false);
+                        setShowDailyPopup(false);
+                      }}
+                    >
+                      <Text style={styles.closeRewardButtonText}>AWESOME!</Text>
+                    </TouchableOpacity>
+                  </LinearGradient>
+                </Animated.View>
+              )}
+            </LinearGradient>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -564,9 +672,12 @@ export default function RewardsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a2744',
+    backgroundColor: '#0f172a',
   },
   header: {
+    paddingHorizontal: 0,
+  },
+  titleSection: {
     paddingHorizontal: 16,
     paddingBottom: 12,
   },
@@ -574,7 +685,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 12,
   },
   title: {
     fontSize: 24,
@@ -582,47 +692,304 @@ const styles = StyleSheet.create({
     color: '#fff',
     letterSpacing: 1,
   },
-  tabsContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
-    borderRadius: 12,
-    padding: 4,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  tabActive: {
-    backgroundColor: 'rgba(251, 191, 36, 0.15)',
-  },
-  tabText: {
+  subtitle: {
     fontSize: 14,
-    fontWeight: '700' as const,
+    fontWeight: '500' as const,
     color: '#64748b',
-  },
-  tabTextActive: {
-    color: '#fbbf24',
-  },
-  notificationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#22c55e',
-    position: 'absolute',
-    top: 6,
-    right: 20,
+    marginTop: 4,
   },
   content: {
     flex: 1,
   },
   contentContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 100,
+    paddingBottom: 160,
+  },
+  cooldownContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(71, 85, 105, 0.3)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    alignSelf: 'center',
+    marginBottom: 8,
+  },
+  cooldownText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#94a3b8',
+  },
+  wheelSection: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+  },
+  wheelContainerOuter: {
+    width: WHEEL_SIZE + 40,
+    height: WHEEL_SIZE + 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wheelGlow: {
+    position: 'absolute',
+    width: WHEEL_SIZE + 20,
+    height: WHEEL_SIZE + 20,
+    borderRadius: (WHEEL_SIZE + 20) / 2,
+    backgroundColor: '#fbbf24',
+  },
+  wheel: {
+    width: WHEEL_SIZE,
+    height: WHEEL_SIZE,
+    borderRadius: WHEEL_SIZE / 2,
+    borderWidth: 5,
+    borderColor: '#fbbf24',
+    overflow: 'hidden',
+    backgroundColor: '#1e293b',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  wheelCenter: {
+    position: 'absolute',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    top: (WHEEL_SIZE - 44) / 2,
+    left: (WHEEL_SIZE - 44) / 2,
+    overflow: 'hidden',
+  },
+  wheelCenterGradient: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  wheelCenterText: {
+    fontSize: 10,
+    fontWeight: '900' as const,
+    color: '#000',
+  },
+  pointer: {
+    position: 'absolute',
+    top: -5,
+    alignItems: 'center',
+  },
+  pointerTriangle: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 12,
+    borderRightWidth: 12,
+    borderTopWidth: 20,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#fbbf24',
+  },
+  spinButton: {
+    marginTop: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  spinButtonDisabled: {
+    opacity: 0.7,
+  },
+  spinButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 14,
+  },
+  spinButtonText: {
+    fontSize: 16,
+    fontWeight: '900' as const,
+    color: '#000',
+    letterSpacing: 1,
+  },
+  spinButtonTextDisabled: {
+    color: '#9ca3af',
+  },
+  spinResultContainer: {
+    marginTop: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  spinResultGradient: {
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(251, 191, 36, 0.4)',
+    borderRadius: 12,
+  },
+  spinResultTitle: {
+    fontSize: 18,
+    fontWeight: '800' as const,
+    color: '#fbbf24',
+    marginBottom: 8,
+  },
+  spinResultContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  spinResultAmount: {
+    fontSize: 28,
+    fontWeight: '900' as const,
+    color: '#60a5fa',
+  },
+  spinResultAmountGreen: {
+    fontSize: 28,
+    fontWeight: '900' as const,
+    color: '#22c55e',
+  },
+  moneyIconLarge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#22c55e',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dollarIconLarge: {
+    fontSize: 12,
+    fontWeight: '800' as const,
+    color: '#fff',
+  },
+  prizesInfo: {
+    marginTop: 16,
+    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(251, 191, 36, 0.2)',
+  },
+  prizesTitle: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: '#fbbf24',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  prizesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  prizeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 2,
+  },
+  prizeMoneyIcon: {
+    fontSize: 12,
+    fontWeight: '800' as const,
+    color: '#22c55e',
+  },
+  prizeText: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+    color: '#fff',
+  },
+  footerSpace: {
+    height: 20,
+  },
+  floatingDailyButton: {
+    position: 'absolute',
+    right: 16,
+    zIndex: 100,
+  },
+  floatingButtonInner: {
+    borderRadius: 28,
+    overflow: 'hidden',
+    shadowColor: '#fbbf24',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  floatingButtonGradient: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  floatingNotificationDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#ef4444',
+    borderWidth: 2,
+    borderColor: '#0f172a',
+  },
+  floatingTimerBadge: {
+    position: 'absolute',
+    bottom: -8,
+    left: -10,
+    right: -10,
+    backgroundColor: '#1e293b',
+    borderRadius: 8,
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(71, 85, 105, 0.5)',
+  },
+  floatingTimerText: {
+    fontSize: 9,
+    fontWeight: '700' as const,
+    color: '#94a3b8',
+    textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  dailyModalContent: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  dailyModalGradient: {
+    padding: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(251, 191, 36, 0.4)',
+    borderRadius: 20,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    zIndex: 10,
+    padding: 4,
+  },
+  dailyModalHeader: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  dailyModalTitle: {
+    fontSize: 24,
+    fontWeight: '900' as const,
+    color: '#fff',
+    marginTop: 8,
+    letterSpacing: 1,
   },
   streakContainer: {
     flexDirection: 'row',
@@ -632,7 +999,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
     marginBottom: 16,
   },
   streakText: {
@@ -643,13 +1010,13 @@ const styles = StyleSheet.create({
   rewardsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
     justifyContent: 'center',
   },
   rewardCard: {
-    width: (SCREEN_WIDTH - 56) / 4,
+    width: 72,
     backgroundColor: 'rgba(30, 41, 59, 0.8)',
-    borderRadius: 8,
+    borderRadius: 10,
     padding: 8,
     alignItems: 'center',
     borderWidth: 1,
@@ -675,6 +1042,17 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(71, 85, 105, 0.3)',
     opacity: 0.5,
   },
+  rewardCardDay7: {
+    width: 80,
+    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+    borderColor: 'rgba(251, 191, 36, 0.4)',
+    borderWidth: 2,
+  },
+  day7Crown: {
+    position: 'absolute',
+    top: -6,
+    right: -4,
+  },
   claimedOverlay: {
     position: 'absolute',
     top: 2,
@@ -684,7 +1062,7 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   dayText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '700' as const,
     color: '#94a3b8',
     marginBottom: 4,
@@ -701,7 +1079,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   rewardAmount: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700' as const,
     color: '#fff',
   },
@@ -709,7 +1087,7 @@ const styles = StyleSheet.create({
     color: '#475569',
   },
   moneyIcon: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800' as const,
     color: '#22c55e',
   },
@@ -791,6 +1169,7 @@ const styles = StyleSheet.create({
   rewardPopupItems: {
     flexDirection: 'row',
     gap: 24,
+    marginBottom: 16,
   },
   rewardPopupItem: {
     flexDirection: 'row',
@@ -807,203 +1186,15 @@ const styles = StyleSheet.create({
     fontWeight: '800' as const,
     color: '#22c55e',
   },
-  moneyIconLarge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#22c55e',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dollarIconLarge: {
-    fontSize: 12,
-    fontWeight: '800' as const,
-    color: '#fff',
-  },
-  cooldownContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(71, 85, 105, 0.3)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-    alignSelf: 'center',
-    marginBottom: 8,
-  },
-  cooldownText: {
-    fontSize: 13,
-    fontWeight: '600' as const,
-    color: '#94a3b8',
-  },
-  wheelSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-  },
-  wheelContainerOuter: {
-    width: WHEEL_SIZE + 40,
-    height: WHEEL_SIZE + 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  wheelGlow: {
-    position: 'absolute',
-    width: WHEEL_SIZE + 20,
-    height: WHEEL_SIZE + 20,
-    borderRadius: (WHEEL_SIZE + 20) / 2,
+  closeRewardButton: {
     backgroundColor: '#fbbf24',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 10,
   },
-  wheel: {
-    width: WHEEL_SIZE,
-    height: WHEEL_SIZE,
-    borderRadius: WHEEL_SIZE / 2,
-    borderWidth: 5,
-    borderColor: '#fbbf24',
-    overflow: 'hidden',
-    backgroundColor: '#1e293b',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  wheelCenter: {
-    position: 'absolute',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    top: (WHEEL_SIZE - 40) / 2,
-    left: (WHEEL_SIZE - 40) / 2,
-    overflow: 'hidden',
-  },
-  wheelCenterGradient: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  wheelCenterText: {
-    fontSize: 9,
-    fontWeight: '900' as const,
-    color: '#000',
-  },
-  pointer: {
-    position: 'absolute',
-    top: -5,
-    alignItems: 'center',
-  },
-  pointerTriangle: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 12,
-    borderRightWidth: 12,
-    borderTopWidth: 20,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: '#fbbf24',
-  },
-  spinButton: {
-    marginTop: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  spinButtonDisabled: {
-    opacity: 0.7,
-  },
-  spinButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 14,
-  },
-  spinButtonText: {
-    fontSize: 16,
-    fontWeight: '900' as const,
-    color: '#000',
-    letterSpacing: 1,
-  },
-  spinButtonTextDisabled: {
-    color: '#9ca3af',
-  },
-  spinResultContainer: {
-    marginTop: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  spinResultGradient: {
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(251, 191, 36, 0.4)',
-    borderRadius: 12,
-  },
-  spinResultTitle: {
-    fontSize: 18,
-    fontWeight: '800' as const,
-    color: '#fbbf24',
-    marginBottom: 8,
-  },
-  spinResultContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  spinResultAmount: {
-    fontSize: 28,
-    fontWeight: '900' as const,
-    color: '#60a5fa',
-  },
-  spinResultAmountGreen: {
-    fontSize: 28,
-    fontWeight: '900' as const,
-    color: '#22c55e',
-  },
-  prizesInfo: {
-    marginTop: 16,
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(251, 191, 36, 0.2)',
-  },
-  prizesTitle: {
+  closeRewardButtonText: {
     fontSize: 14,
-    fontWeight: '700' as const,
-    color: '#fbbf24',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  prizesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'center',
-  },
-  prizeItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(15, 23, 42, 0.8)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 2,
-  },
-  prizeMoneyIcon: {
-    fontSize: 12,
     fontWeight: '800' as const,
-    color: '#22c55e',
-  },
-  prizeText: {
-    fontSize: 12,
-    fontWeight: '700' as const,
-    color: '#fff',
-  },
-  footerSpace: {
-    height: 20,
+    color: '#000',
   },
 });

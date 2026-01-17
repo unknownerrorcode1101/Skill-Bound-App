@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Star, Zap, Gift, Award, Palette, Check } from 'lucide-react-native';
 import { useGame, XP_BAR_COLORS } from '@/contexts/GameContext';
+import CurrencyHeader from '@/components/CurrencyHeader';
 
 const RANKS = [
   { name: 'Rookie', minLevel: 1, maxLevel: 5, color: '#94a3b8', icon: '🌱' },
@@ -38,11 +39,15 @@ export default function XPScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1a2744', '#0f172a', '#1a2744']}
+        colors={['#0f172a', '#1e3a5f', '#0f172a']}
         style={StyleSheet.absoluteFill}
       />
 
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <CurrencyHeader />
+      </View>
+
+      <View style={styles.titleSection}>
         <TouchableOpacity 
           style={styles.backButton} 
           onPress={() => router.back()}
@@ -270,9 +275,12 @@ export default function XPScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a2744',
+    backgroundColor: '#0f172a',
   },
   header: {
+    paddingHorizontal: 0,
+  },
+  titleSection: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
