@@ -41,7 +41,7 @@ export default function TabLayout() {
           fontWeight: '700' as const,
           letterSpacing: 0.5,
           textAlign: 'center' as const,
-          marginTop: 6,
+          marginTop: 10,
         },
       }}
     >

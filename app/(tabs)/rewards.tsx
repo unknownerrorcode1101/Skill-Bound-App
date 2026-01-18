@@ -52,6 +52,7 @@ export default function RewardsScreen() {
   const winPopupScaleAnim = useRef(new Animated.Value(0)).current;
   const spinResultScaleAnim = useRef(new Animated.Value(0)).current;
   const spinGlowAnim = useRef(new Animated.Value(0)).current;
+  const buttonPulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const updateCooldown = () => {
@@ -84,6 +85,23 @@ export default function RewardsScreen() {
       spinGlowAnim.setValue(0);
     }
   }, [canSpin, isSpinning, spinGlowAnim]);
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(buttonPulseAnim, {
+          toValue: 1.03,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonPulseAnim, {
+          toValue: 0.97,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [buttonPulseAnim]);
 
   const handleSpin = useCallback(() => {
     if (!canSpin || isSpinning) return;
@@ -460,13 +478,15 @@ export default function RewardsScreen() {
                   </View>
                 )}
 
-                <TouchableOpacity
-                  style={styles.awesomeButton}
-                  onPress={() => setShowWinPopup(false)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.awesomeButtonText}>AWESOME!</Text>
-                </TouchableOpacity>
+                <Animated.View style={{ transform: [{ scale: buttonPulseAnim }] }}>
+                  <TouchableOpacity
+                    style={styles.awesomeButton}
+                    onPress={() => setShowWinPopup(false)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.awesomeButtonText}>AWESOME!</Text>
+                  </TouchableOpacity>
+                </Animated.View>
               </LinearGradient>
             </Animated.View>
           </Pressable>

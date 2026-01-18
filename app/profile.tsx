@@ -8,6 +8,17 @@ import * as ImagePicker from 'expo-image-picker';
 import { useGame } from '@/contexts/GameContext';
 import CurrencyHeader from '@/components/CurrencyHeader';
 
+const formatCompact = (amount: number): string => {
+  if (amount >= 1000000000) {
+    return `${(amount / 1000000000).toFixed(2)}B`;
+  } else if (amount >= 1000000) {
+    return `${(amount / 1000000).toFixed(2)}M`;
+  } else if (amount >= 1000) {
+    return `${(amount / 1000).toFixed(2)}K`;
+  }
+  return `${amount.toFixed(2)}`;
+};
+
 const PRESET_AVATARS = [
   'https://r2-pub.rork.com/generated-images/fdbb28f5-161e-4516-81ab-88f2f2ce916e.png',
   'https://r2-pub.rork.com/generated-images/1c031575-a6a2-4be5-9ad7-735b37a18dda.png',
@@ -204,7 +215,7 @@ export default function ProfileScreen() {
               <View style={[styles.statIconContainer, { backgroundColor: 'rgba(34, 197, 94, 0.2)' }]}>
                 <DollarSign size={24} color="#22c55e" />
               </View>
-              <Text style={styles.statValue}>${money.toFixed(2)}</Text>
+              <Text style={styles.statValue}>${formatCompact(money)}</Text>
               <Text style={styles.statLabel}>MONEY</Text>
             </LinearGradient>
           </View>

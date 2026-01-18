@@ -74,7 +74,7 @@ export default function XPScreen() {
         <View style={styles.levelSection}>
           <View style={styles.levelCircleWrapper}>
             <LinearGradient
-              colors={['#8b5cf6', '#7c3aed', '#6d28d9']}
+              colors={[xpBarColors[0], xpBarColors[1], xpBarColors[1]]}
               style={styles.levelCircle}
             >
               <Text style={styles.levelNumber}>{level}</Text>
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
-    borderColor: 'rgba(139, 92, 246, 0.5)',
+    borderColor: 'rgba(96, 165, 250, 0.5)',
   },
   levelGlow: {
     position: 'absolute',

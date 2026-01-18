@@ -73,13 +73,13 @@ export default function HomeScreen() {
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
-          toValue: 1.12,
-          duration: 1200,
+          toValue: 1.03,
+          duration: 1500,
           useNativeDriver: true,
         }),
         Animated.timing(pulseAnim, {
-          toValue: 0.92,
-          duration: 1200,
+          toValue: 0.97,
+          duration: 1500,
           useNativeDriver: true,
         }),
       ])
