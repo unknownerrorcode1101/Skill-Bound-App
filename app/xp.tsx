@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Star, Zap, Gift, Award, Palette, Check, Pencil } from 'lucide-react-native';
+import { ChevronLeft, Star, Zap, Gift, Award, Palette, Check, Pencil, X } from 'lucide-react-native';
+import { useState } from 'react';
 import { useGame, XP_BAR_COLORS } from '@/contexts/GameContext';
 import CurrencyHeader from '@/components/CurrencyHeader';
 
@@ -31,6 +32,8 @@ export default function XPScreen() {
     xpBarColors,
     setXpBarColor,
   } = useGame();
+
+  const [showColorModal, setShowColorModal] = useState(false);
 
   const currentRank = RANKS.find(r => level >= r.minLevel && level <= r.maxLevel) || RANKS[0];
   const nextRank = RANKS.find(r => r.minLevel > level) || null;
@@ -80,7 +83,7 @@ export default function XPScreen() {
             <View style={styles.levelGlow} />
             <TouchableOpacity 
               style={styles.levelEditButton}
-              onPress={() => {}}
+              onPress={() => setShowColorModal(true)}
               activeOpacity={0.7}
             >
               <Pencil size={14} color="#fff" />
@@ -279,6 +282,80 @@ export default function XPScreen() {
           <Text style={styles.totalXpValue}>{xp.toLocaleString()} XP</Text>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showColorModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowColorModal(false)}
+      >
+        <Pressable 
+          style={styles.colorModalOverlay}
+          onPress={() => setShowColorModal(false)}
+        >
+          <Pressable style={styles.colorModalContent} onPress={(e) => e.stopPropagation()}>
+            <LinearGradient
+              colors={['#1e293b', '#0f172a']}
+              style={styles.colorModalGradient}
+            >
+              <TouchableOpacity 
+                style={styles.colorModalClose}
+                onPress={() => setShowColorModal(false)}
+              >
+                <X size={24} color="#64748b" />
+              </TouchableOpacity>
+
+              <View style={styles.colorModalHeader}>
+                <Palette size={28} color="#ec4899" />
+                <Text style={styles.colorModalTitle}>Level Badge Color</Text>
+              </View>
+
+              <View style={styles.colorModalGrid}>
+                {XP_BAR_COLORS.map((colorOption) => {
+                  const isSelected = xpBarColorId === colorOption.id;
+                  return (
+                    <TouchableOpacity
+                      key={colorOption.id}
+                      style={[
+                        styles.colorModalOption,
+                        isSelected && styles.colorModalOptionSelected,
+                      ]}
+                      onPress={() => {
+                        setXpBarColor(colorOption.id);
+                        setShowColorModal(false);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <LinearGradient
+                        colors={[colorOption.colors[0], colorOption.colors[1]]}
+                        style={styles.colorModalCircle}
+                      />
+                      <Text style={[styles.colorModalName, isSelected && styles.colorModalNameSelected]}>
+                        {colorOption.name}
+                      </Text>
+                      {isSelected && (
+                        <View style={styles.colorModalCheck}>
+                          <Check size={14} color="#22c55e" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <View style={styles.colorModalPreview}>
+                <Text style={styles.colorModalPreviewLabel}>Preview</Text>
+                <LinearGradient
+                  colors={[xpBarColors[0], xpBarColors[1]]}
+                  style={styles.colorModalPreviewCircle}
+                >
+                  <Text style={styles.colorModalPreviewLevel}>{level}</Text>
+                </LinearGradient>
+              </View>
+            </LinearGradient>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -337,7 +414,7 @@ const styles = StyleSheet.create({
   levelSection: {
     alignItems: 'center',
     marginBottom: 24,
-    marginTop: 8,
+    marginTop: 20,
   },
   levelCircleWrapper: {
     position: 'relative',
@@ -701,6 +778,107 @@ const styles = StyleSheet.create({
   },
   totalXpValue: {
     fontSize: 28,
+    fontWeight: '900' as const,
+    color: '#fff',
+  },
+  colorModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  colorModalContent: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  colorModalGradient: {
+    padding: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(236, 72, 153, 0.4)',
+    borderRadius: 20,
+  },
+  colorModalClose: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    zIndex: 10,
+    padding: 4,
+  },
+  colorModalHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  colorModalTitle: {
+    fontSize: 20,
+    fontWeight: '800' as const,
+    color: '#fff',
+    marginTop: 8,
+    letterSpacing: 1,
+  },
+  colorModalGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'center',
+  },
+  colorModalOption: {
+    width: 70,
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  colorModalOptionSelected: {
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 197, 94, 0.4)',
+  },
+  colorModalCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginBottom: 6,
+  },
+  colorModalName: {
+    fontSize: 10,
+    fontWeight: '700' as const,
+    color: '#94a3b8',
+  },
+  colorModalNameSelected: {
+    color: '#22c55e',
+  },
+  colorModalCheck: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+  },
+  colorModalPreview: {
+    alignItems: 'center',
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  colorModalPreviewLabel: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#64748b',
+    marginBottom: 10,
+  },
+  colorModalPreviewCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  colorModalPreviewLevel: {
+    fontSize: 22,
     fontWeight: '900' as const,
     color: '#fff',
   },

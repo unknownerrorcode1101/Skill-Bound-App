@@ -12,7 +12,7 @@ import {
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { X, Play, Zap, Target, Clock, Trophy, ArrowLeft } from 'lucide-react-native';
+import { X, Play, Zap, Target, Clock, Trophy, ArrowLeft, Gem } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useGame } from '@/contexts/GameContext';
@@ -116,14 +116,16 @@ const getRandomColor = () => ROCK_COLORS[Math.floor(Math.random() * ROCK_COLORS.
 export default function BallBlasterSurvival() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { saveMatch } = useGame();
+  const { saveMatch, gems, money, addGems, spendMoney } = useGame();
   const GAME_TOP = insets.top + 60;
   const GAME_BOTTOM = SCREEN_HEIGHT - insets.bottom - 40;
   const PLAYER_Y = GAME_BOTTOM - PLAYER_HEIGHT - 80;
   const WHEEL_BOTTOM_Y = PLAYER_Y + PLAYER_BODY_HEIGHT + WHEEL_MARGIN + WHEEL_HEIGHT;
   const GROUND_Y = WHEEL_BOTTOM_Y;
 
-  const [gameState, setGameState] = useState<'menu' | 'playing' | 'gameover' | 'upgrades'>('menu');
+  const [gameState, setGameState] = useState<'menu' | 'wager' | 'playing' | 'gameover' | 'upgrades'>('menu');
+  const [wagerType, setWagerType] = useState<'diamonds' | 'money'>('diamonds');
+  const [wagerAmount, setWagerAmount] = useState<number>(1);
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
@@ -927,7 +929,7 @@ export default function BallBlasterSurvival() {
         
         <TouchableOpacity
           style={styles.playButton}
-          onPress={startGame}
+          onPress={() => setGameState('wager')}
           activeOpacity={0.8}
         >
           <LinearGradient
@@ -945,6 +947,162 @@ export default function BallBlasterSurvival() {
           activeOpacity={0.8}
         >
           <Text style={styles.upgradesButtonText}>UPGRADES</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const WAGER_OPTIONS = [
+    { amount: 1, color: '#3b82f6' },
+    { amount: 10, color: '#22c55e' },
+    { amount: 25, color: '#f97316' },
+    { amount: 50, color: '#ec4899' },
+    { amount: 100, color: '#8b5cf6' },
+    { amount: 100000, color: '#fbbf24', isGold: true },
+  ];
+
+  const canAffordWager = wagerType === 'diamonds' ? gems >= wagerAmount : money >= wagerAmount;
+
+  const handleStartWithWager = () => {
+    if (!canAffordWager) return;
+    
+    if (wagerType === 'diamonds') {
+      addGems(-wagerAmount);
+    } else {
+      spendMoney(wagerAmount);
+    }
+    
+    startGame();
+  };
+
+  const renderWager = () => (
+    <View style={styles.menuContainer}>
+      <LinearGradient
+        colors={['#0f172a', '#1e293b', '#0f172a']}
+        style={StyleSheet.absoluteFill}
+      />
+      
+      <TouchableOpacity
+        style={[styles.homeButton, { top: insets.top + 16 }]}
+        onPress={() => setGameState('menu')}
+        activeOpacity={0.7}
+      >
+        <ArrowLeft size={24} color="#fff" />
+      </TouchableOpacity>
+      
+      <View style={styles.wagerContent}>
+        <Text style={styles.wagerTitle}>SET YOUR WAGER</Text>
+        
+        <View style={styles.wagerTypeToggle}>
+          <TouchableOpacity
+            style={[
+              styles.wagerTypeButton,
+              wagerType === 'diamonds' && styles.wagerTypeButtonActive,
+            ]}
+            onPress={() => setWagerType('diamonds')}
+          >
+            <Gem size={20} color={wagerType === 'diamonds' ? '#60a5fa' : '#64748b'} fill={wagerType === 'diamonds' ? '#60a5fa' : 'transparent'} />
+            <Text style={[styles.wagerTypeText, wagerType === 'diamonds' && styles.wagerTypeTextActive]}>
+              Diamonds
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.wagerTypeButton,
+              wagerType === 'money' && styles.wagerTypeButtonActiveMoney,
+            ]}
+            onPress={() => setWagerType('money')}
+          >
+            <Text style={[styles.wagerDollarIcon, wagerType === 'money' && styles.wagerDollarIconActive]}>$</Text>
+            <Text style={[styles.wagerTypeText, wagerType === 'money' && styles.wagerTypeTextActiveMoney]}>
+              Money
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.wagerBalanceRow}>
+          {wagerType === 'diamonds' ? (
+            <>
+              <Gem size={16} color="#60a5fa" fill="#60a5fa" />
+              <Text style={styles.wagerBalanceText}>{gems.toLocaleString()}</Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.wagerBalanceDollar}>$</Text>
+              <Text style={styles.wagerBalanceTextMoney}>{money.toFixed(2)}</Text>
+            </>
+          )}
+        </View>
+        
+        <View style={styles.wagerOptionsGrid}>
+          {WAGER_OPTIONS.map((option) => {
+            const isSelected = wagerAmount === option.amount;
+            const canAfford = wagerType === 'diamonds' ? gems >= option.amount : money >= option.amount;
+            
+            return (
+              <TouchableOpacity
+                key={option.amount}
+                style={[
+                  styles.wagerOption,
+                  isSelected && styles.wagerOptionSelected,
+                  option.isGold && styles.wagerOptionGold,
+                  !canAfford && styles.wagerOptionDisabled,
+                ]}
+                onPress={() => canAfford && setWagerAmount(option.amount)}
+                disabled={!canAfford}
+              >
+                {option.isGold && (
+                  <View style={styles.wagerGoldBadge}>
+                    <Text style={styles.wagerGoldBadgeText}>JACKPOT</Text>
+                  </View>
+                )}
+                <Text style={[
+                  styles.wagerOptionAmount,
+                  isSelected && styles.wagerOptionAmountSelected,
+                  option.isGold && styles.wagerOptionAmountGold,
+                  !canAfford && styles.wagerOptionAmountDisabled,
+                ]}>
+                  {option.amount >= 1000 ? `${(option.amount / 1000)}K` : option.amount}
+                </Text>
+                <View style={styles.wagerOptionIconRow}>
+                  {wagerType === 'diamonds' ? (
+                    <Gem size={14} color={!canAfford ? '#475569' : option.isGold ? '#fbbf24' : '#60a5fa'} fill={!canAfford ? '#475569' : option.isGold ? '#fbbf24' : '#60a5fa'} />
+                  ) : (
+                    <Text style={[styles.wagerOptionDollar, !canAfford && styles.wagerOptionDollarDisabled, option.isGold && styles.wagerOptionDollarGold]}>$</Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <View style={styles.wagerPotentialWin}>
+          <Text style={styles.wagerPotentialLabel}>Potential Win (2x)</Text>
+          <View style={styles.wagerPotentialValue}>
+            {wagerType === 'diamonds' ? (
+              <Gem size={18} color="#60a5fa" fill="#60a5fa" />
+            ) : (
+              <Text style={styles.wagerPotentialDollar}>$</Text>
+            )}
+            <Text style={[styles.wagerPotentialAmount, wagerType === 'money' && styles.wagerPotentialAmountMoney]}>
+              {(wagerAmount * 2).toLocaleString()}
+            </Text>
+          </View>
+        </View>
+        
+        <TouchableOpacity
+          style={[styles.wagerPlayButton, !canAffordWager && styles.wagerPlayButtonDisabled]}
+          onPress={handleStartWithWager}
+          activeOpacity={0.8}
+          disabled={!canAffordWager}
+        >
+          <LinearGradient
+            colors={canAffordWager ? ['#22c55e', '#16a34a'] : ['#475569', '#374151']}
+            style={styles.wagerPlayButtonGradient}
+          >
+            <Play size={28} color="#fff" fill="#fff" />
+            <Text style={styles.wagerPlayButtonText}>START GAME</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </View>
@@ -1214,6 +1372,7 @@ export default function BallBlasterSurvival() {
   return (
     <View style={styles.container}>
       {gameState === 'menu' && renderMenu()}
+      {gameState === 'wager' && renderWager()}
       {gameState === 'upgrades' && renderUpgrades()}
       {gameState === 'playing' && renderGame()}
       {gameState === 'gameover' && renderGameOver()}
@@ -1691,5 +1850,212 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
+  },
+  wagerContent: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  wagerTitle: {
+    fontSize: 28,
+    fontWeight: '900' as const,
+    color: '#fff',
+    letterSpacing: 2,
+    marginBottom: 24,
+    textShadowColor: 'rgba(59, 130, 246, 0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 10,
+  },
+  wagerTypeToggle: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    borderRadius: 16,
+    padding: 4,
+    marginBottom: 16,
+  },
+  wagerTypeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  wagerTypeButtonActive: {
+    backgroundColor: 'rgba(96, 165, 250, 0.2)',
+  },
+  wagerTypeButtonActiveMoney: {
+    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+  },
+  wagerTypeText: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: '#64748b',
+  },
+  wagerTypeTextActive: {
+    color: '#60a5fa',
+  },
+  wagerTypeTextActiveMoney: {
+    color: '#22c55e',
+  },
+  wagerDollarIcon: {
+    fontSize: 18,
+    fontWeight: '800' as const,
+    color: '#64748b',
+  },
+  wagerDollarIconActive: {
+    color: '#22c55e',
+  },
+  wagerBalanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 24,
+  },
+  wagerBalanceText: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#60a5fa',
+  },
+  wagerBalanceDollar: {
+    fontSize: 18,
+    fontWeight: '800' as const,
+    color: '#22c55e',
+  },
+  wagerBalanceTextMoney: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#22c55e',
+  },
+  wagerOptionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 24,
+  },
+  wagerOption: {
+    width: 90,
+    height: 80,
+    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(96, 165, 250, 0.3)',
+  },
+  wagerOptionSelected: {
+    borderColor: '#60a5fa',
+    backgroundColor: 'rgba(96, 165, 250, 0.15)',
+  },
+  wagerOptionGold: {
+    borderColor: '#fbbf24',
+    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+    shadowColor: '#fbbf24',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  wagerOptionDisabled: {
+    opacity: 0.4,
+    borderColor: 'rgba(71, 85, 105, 0.3)',
+  },
+  wagerGoldBadge: {
+    position: 'absolute',
+    top: -8,
+    backgroundColor: '#fbbf24',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  wagerGoldBadgeText: {
+    fontSize: 8,
+    fontWeight: '800' as const,
+    color: '#000',
+    letterSpacing: 0.5,
+  },
+  wagerOptionAmount: {
+    fontSize: 22,
+    fontWeight: '800' as const,
+    color: '#fff',
+  },
+  wagerOptionAmountSelected: {
+    color: '#60a5fa',
+  },
+  wagerOptionAmountGold: {
+    color: '#fbbf24',
+  },
+  wagerOptionAmountDisabled: {
+    color: '#475569',
+  },
+  wagerOptionIconRow: {
+    marginTop: 4,
+  },
+  wagerOptionDollar: {
+    fontSize: 14,
+    fontWeight: '800' as const,
+    color: '#22c55e',
+  },
+  wagerOptionDollarDisabled: {
+    color: '#475569',
+  },
+  wagerOptionDollarGold: {
+    color: '#fbbf24',
+  },
+  wagerPotentialWin: {
+    alignItems: 'center',
+    marginBottom: 24,
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(34, 197, 94, 0.3)',
+  },
+  wagerPotentialLabel: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#64748b',
+    marginBottom: 4,
+  },
+  wagerPotentialValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  wagerPotentialDollar: {
+    fontSize: 20,
+    fontWeight: '800' as const,
+    color: '#22c55e',
+  },
+  wagerPotentialAmount: {
+    fontSize: 24,
+    fontWeight: '800' as const,
+    color: '#60a5fa',
+  },
+  wagerPotentialAmountMoney: {
+    color: '#22c55e',
+  },
+  wagerPlayButton: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  wagerPlayButtonDisabled: {
+    opacity: 0.6,
+  },
+  wagerPlayButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    paddingHorizontal: 48,
+    paddingVertical: 18,
+  },
+  wagerPlayButtonText: {
+    fontSize: 20,
+    fontWeight: '800' as const,
+    color: '#fff',
+    letterSpacing: 2,
   },
 });

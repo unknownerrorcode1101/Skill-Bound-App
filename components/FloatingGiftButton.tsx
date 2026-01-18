@@ -75,6 +75,7 @@ export default function FloatingGiftButton({ bottomOffset = 90 }: FloatingGiftBu
   const dailyScaleAnim = useRef(new Animated.Value(1)).current;
   const dailyGlowAnim = useRef(new Animated.Value(0)).current;
   const dailyRewardScaleAnim = useRef(new Animated.Value(0)).current;
+  const buttonPulseAnim = useRef(new Animated.Value(1)).current;
 
   const panResponder = useRef(
     PanResponder.create({
@@ -209,7 +210,22 @@ export default function FloatingGiftButton({ bottomOffset = 90 }: FloatingGiftBu
         }),
       ])
     ).start();
-  }, [floatingButtonPulse]);
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(buttonPulseAnim, {
+          toValue: 1.05,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonPulseAnim, {
+          toValue: 0.95,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [floatingButtonPulse, buttonPulseAnim]);
 
   const handleClaimDaily = async () => {
     if (!canClaim || dailyClaimed) return;
@@ -441,15 +457,17 @@ export default function FloatingGiftButton({ bottomOffset = 90 }: FloatingGiftBu
                         <Text style={styles.rewardPopupAmountGreen}>+{rewardMoney}</Text>
                       </View>
                     </View>
-                    <TouchableOpacity
-                      style={styles.closeRewardButton}
-                      onPress={() => {
-                        setShowDailyReward(false);
-                        setShowDailyPopup(false);
-                      }}
-                    >
-                      <Text style={styles.closeRewardButtonText}>AWESOME!</Text>
-                    </TouchableOpacity>
+                    <Animated.View style={{ transform: [{ scale: buttonPulseAnim }] }}>
+                      <TouchableOpacity
+                        style={styles.closeRewardButton}
+                        onPress={() => {
+                          setShowDailyReward(false);
+                          setShowDailyPopup(false);
+                        }}
+                      >
+                        <Text style={styles.closeRewardButtonText}>AWESOME!</Text>
+                      </TouchableOpacity>
+                    </Animated.View>
                   </LinearGradient>
                 </Animated.View>
               )}
