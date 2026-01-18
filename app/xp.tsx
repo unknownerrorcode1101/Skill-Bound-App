@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Star, Zap, Gift, Award, Palette, Check } from 'lucide-react-native';
+import { ChevronLeft, Star, Zap, Gift, Award, Palette, Check, Pencil } from 'lucide-react-native';
 import { useGame, XP_BAR_COLORS } from '@/contexts/GameContext';
 import CurrencyHeader from '@/components/CurrencyHeader';
 
@@ -59,6 +59,10 @@ export default function XPScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
+      <View style={styles.sectionDivider}>
+        <View style={styles.dividerLine} />
+      </View>
+
       <ScrollView 
         style={styles.content}
         contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + 20 }]}
@@ -74,6 +78,13 @@ export default function XPScreen() {
               <Text style={styles.levelLabel}>LEVEL</Text>
             </LinearGradient>
             <View style={styles.levelGlow} />
+            <TouchableOpacity 
+              style={styles.levelEditButton}
+              onPress={() => {}}
+              activeOpacity={0.7}
+            >
+              <Pencil size={14} color="#fff" />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -284,7 +295,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 12,
+    marginTop: 8,
   },
   backButton: {
     width: 44,
@@ -311,9 +323,21 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingHorizontal: 16,
   },
+  sectionDivider: {
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  dividerLine: {
+    width: '100%',
+    height: 3,
+    backgroundColor: 'rgba(96, 165, 250, 0.25)',
+    borderRadius: 2,
+  },
   levelSection: {
     alignItems: 'center',
     marginBottom: 24,
+    marginTop: 8,
   },
   levelCircleWrapper: {
     position: 'relative',
@@ -336,6 +360,19 @@ const styles = StyleSheet.create({
     top: -10,
     left: -10,
     zIndex: -1,
+  },
+  levelEditButton: {
+    position: 'absolute',
+    bottom: -4,
+    left: -4,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#3b82f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#1a2744',
   },
   levelNumber: {
     fontSize: 36,

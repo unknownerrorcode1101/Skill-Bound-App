@@ -671,6 +671,7 @@ const styles = StyleSheet.create({
   titleSection: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 10,
     paddingHorizontal: 16,
     paddingBottom: 12,
@@ -680,6 +681,7 @@ const styles = StyleSheet.create({
     fontWeight: '900' as const,
     color: '#fff',
     letterSpacing: 2,
+    textAlign: 'center' as const,
   },
   sectionDivider: {
     alignItems: 'center',

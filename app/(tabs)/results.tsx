@@ -221,6 +221,7 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
   },
   title: {
@@ -228,12 +229,13 @@ const styles = StyleSheet.create({
     fontWeight: '900' as const,
     color: '#fff',
     letterSpacing: 1,
+    textAlign: 'center' as const,
   },
   subtitle: {
     fontSize: 13,
     color: '#94a3b8',
     marginTop: 2,
-    marginLeft: 32,
+    textAlign: 'center' as const,
   },
   sectionDivider: {
     alignItems: 'center',

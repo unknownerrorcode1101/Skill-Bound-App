@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Platform, ScrollView, Modal, Pressable } from 'react-native';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Gem, Clock, Sparkles } from 'lucide-react-native';
+import { Gem, Clock, Sparkles, Star, ExternalLink } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useGame } from '@/contexts/GameContext';
 import * as Haptics from 'expo-haptics';
@@ -336,6 +336,79 @@ export default function RewardsScreen() {
           </View>
         </View>
 
+        <View style={styles.socialSection}>
+          <Text style={styles.socialTitle}>FOLLOW US FOR GEMS</Text>
+          <View style={styles.socialButtons}>
+            <TouchableOpacity style={styles.socialButton} activeOpacity={0.8}>
+              <LinearGradient
+                colors={['#E1306C', '#C13584', '#833AB4']}
+                style={styles.socialButtonGradient}
+              >
+                <Text style={styles.socialIcon}>📷</Text>
+                <View style={styles.socialButtonContent}>
+                  <Text style={styles.socialButtonLabel}>Instagram</Text>
+                  <View style={styles.socialReward}>
+                    <Gem size={12} color="#fff" fill="#fff" />
+                    <Text style={styles.socialRewardText}>+25</Text>
+                  </View>
+                </View>
+                <ExternalLink size={16} color="#fff" />
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.socialButton} activeOpacity={0.8}>
+              <LinearGradient
+                colors={['#5865F2', '#4752C4', '#3C45A5']}
+                style={styles.socialButtonGradient}
+              >
+                <Text style={styles.socialIcon}>💬</Text>
+                <View style={styles.socialButtonContent}>
+                  <Text style={styles.socialButtonLabel}>Discord</Text>
+                  <View style={styles.socialReward}>
+                    <Gem size={12} color="#fff" fill="#fff" />
+                    <Text style={styles.socialRewardText}>+25</Text>
+                  </View>
+                </View>
+                <ExternalLink size={16} color="#fff" />
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.reviewSection}>
+          <LinearGradient
+            colors={['rgba(251, 191, 36, 0.15)', 'rgba(251, 191, 36, 0.05)']}
+            style={styles.reviewCard}
+          >
+            <View style={styles.reviewHeader}>
+              <Star size={22} color="#fbbf24" fill="#fbbf24" />
+              <Text style={styles.reviewTitle}>LEAVE A REVIEW</Text>
+            </View>
+            <Text style={styles.reviewDescription}>Rate us 5 stars and get rewarded!</Text>
+            <View style={styles.reviewRewards}>
+              <View style={styles.reviewRewardItem}>
+                <Gem size={16} color="#60a5fa" fill="#60a5fa" />
+                <Text style={styles.reviewRewardText}>+50 Gems</Text>
+              </View>
+              <View style={styles.reviewRewardItem}>
+                <View style={styles.reviewMoneyIcon}>
+                  <Text style={styles.reviewDollarIcon}>$</Text>
+                </View>
+                <Text style={styles.reviewRewardTextGreen}>+$2.00</Text>
+              </View>
+            </View>
+            <TouchableOpacity style={styles.reviewButton} activeOpacity={0.8}>
+              <LinearGradient
+                colors={['#fbbf24', '#f59e0b']}
+                style={styles.reviewButtonGradient}
+              >
+                <Star size={16} color="#000" fill="#000" />
+                <Text style={styles.reviewButtonText}>RATE NOW</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </LinearGradient>
+        </View>
+
         <View style={styles.footerSpace} />
       </ScrollView>
 
@@ -530,7 +603,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   slotReel: {
-    paddingTop: ITEM_HEIGHT,
+    paddingTop: 0,
   },
   slotItem: {
     height: ITEM_HEIGHT,
@@ -759,25 +832,28 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   winModalGradient: {
-    padding: 24,
+    padding: 28,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(34, 197, 94, 0.5)',
-    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: '#fbbf24',
+    borderRadius: 24,
   },
   winModalHeader: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   winModalEmoji: {
-    fontSize: 48,
-    marginBottom: 8,
+    fontSize: 56,
+    marginBottom: 12,
   },
   winModalTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '900' as const,
     color: '#fbbf24',
-    letterSpacing: 1,
+    letterSpacing: 2,
+    textShadowColor: 'rgba(251, 191, 36, 0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 10,
   },
   winModalPrize: {
     alignItems: 'center',
@@ -816,19 +892,153 @@ const styles = StyleSheet.create({
   },
   awesomeButton: {
     backgroundColor: '#22c55e',
-    paddingHorizontal: 48,
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingHorizontal: 56,
+    paddingVertical: 16,
+    borderRadius: 14,
     shadowColor: '#22c55e',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 8,
   },
   awesomeButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '900' as const,
     color: '#fff',
+    letterSpacing: 2,
+  },
+  socialSection: {
+    marginTop: 16,
+    backgroundColor: 'rgba(30, 41, 59, 0.6)',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.2)',
+  },
+  socialTitle: {
+    fontSize: 14,
+    fontWeight: '800' as const,
+    color: '#94a3b8',
+    letterSpacing: 1,
+    marginBottom: 12,
+    textAlign: 'center' as const,
+  },
+  socialButtons: {
+    gap: 10,
+  },
+  socialButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  socialButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  socialIcon: {
+    fontSize: 24,
+  },
+  socialButtonContent: {
+    flex: 1,
+  },
+  socialButtonLabel: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: '#fff',
+  },
+  socialReward: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  socialRewardText: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  reviewSection: {
+    marginTop: 16,
+  },
+  reviewCard: {
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(251, 191, 36, 0.3)',
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  reviewTitle: {
+    fontSize: 16,
+    fontWeight: '800' as const,
+    color: '#fbbf24',
+    letterSpacing: 1,
+  },
+  reviewDescription: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: '#94a3b8',
+    marginBottom: 12,
+  },
+  reviewRewards: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+    marginBottom: 14,
+  },
+  reviewRewardItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  reviewRewardText: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: '#60a5fa',
+  },
+  reviewRewardTextGreen: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: '#22c55e',
+  },
+  reviewMoneyIcon: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#22c55e',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reviewDollarIcon: {
+    fontSize: 10,
+    fontWeight: '800' as const,
+    color: '#fff',
+  },
+  reviewButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  reviewButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+  },
+  reviewButtonText: {
+    fontSize: 14,
+    fontWeight: '800' as const,
+    color: '#000',
     letterSpacing: 1,
   },
 });

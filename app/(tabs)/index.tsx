@@ -51,8 +51,8 @@ export default function HomeScreen() {
   const [showGemsTooltip, setShowGemsTooltip] = useState(false);
   
   const scaleAnim = useRef(new Animated.Value(1)).current;
-
   const shimmerAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.loop(
@@ -69,7 +69,22 @@ export default function HomeScreen() {
         }),
       ])
     ).start();
-  }, [shimmerAnim]);
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.05,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [shimmerAnim, pulseAnim]);
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
@@ -228,7 +243,7 @@ export default function HomeScreen() {
 
       </View>
 
-      <View style={styles.logoContainer}>
+      <Animated.View style={[styles.logoContainer, { transform: [{ scale: pulseAnim }] }]}>
         <View style={styles.logoWrapper}>
           <Text style={styles.logoText}>SKILL</Text>
           <View style={styles.logoBolt}>
@@ -236,7 +251,7 @@ export default function HomeScreen() {
           </View>
         </View>
         <Text style={styles.logoSubtext}>BOUND</Text>
-      </View>
+      </Animated.View>
 
       <View style={styles.sectionDivider}>
         <View style={styles.dividerLine} />
