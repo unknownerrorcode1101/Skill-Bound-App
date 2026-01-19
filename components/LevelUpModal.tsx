@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Zap, Star, ChevronUp } from 'lucide-react-native';
+import { Gem, ChevronUp, Sparkles } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -22,59 +22,23 @@ interface LevelUpModalProps {
 
 export default function LevelUpModal({ visible, level, onDismiss }: LevelUpModalProps) {
   const scaleAnim = useRef(new Animated.Value(0)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
   const gemScaleAnim = useRef(new Animated.Value(0)).current;
-  const starAnims = useRef([...Array(8)].map(() => new Animated.Value(0))).current;
-  const glowAnim = useRef(new Animated.Value(0)).current;
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       
       scaleAnim.setValue(0);
-      rotateAnim.setValue(0);
       gemScaleAnim.setValue(0);
-      starAnims.forEach(anim => anim.setValue(0));
-      glowAnim.setValue(0);
+      shimmerAnim.setValue(0);
 
-      Animated.sequence([
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 6,
-          tension: 100,
-          useNativeDriver: true,
-        }),
-        Animated.parallel([
-          Animated.loop(
-            Animated.sequence([
-              Animated.timing(rotateAnim, {
-                toValue: 1,
-                duration: 3000,
-                useNativeDriver: true,
-              }),
-              Animated.timing(rotateAnim, {
-                toValue: 0,
-                duration: 3000,
-                useNativeDriver: true,
-              }),
-            ])
-          ),
-          Animated.loop(
-            Animated.sequence([
-              Animated.timing(glowAnim, {
-                toValue: 1,
-                duration: 1500,
-                useNativeDriver: true,
-              }),
-              Animated.timing(glowAnim, {
-                toValue: 0,
-                duration: 1500,
-                useNativeDriver: true,
-              }),
-            ])
-          ),
-        ]),
-      ]).start();
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 6,
+        tension: 100,
+        useNativeDriver: true,
+      }).start();
 
       Animated.spring(gemScaleAnim, {
         toValue: 1,
@@ -84,19 +48,15 @@ export default function LevelUpModal({ visible, level, onDismiss }: LevelUpModal
         useNativeDriver: true,
       }).start();
 
-      starAnims.forEach((anim, index) => {
-        Animated.sequence([
-          Animated.delay(index * 100),
-          Animated.spring(anim, {
-            toValue: 1,
-            friction: 4,
-            tension: 100,
-            useNativeDriver: true,
-          }),
-        ]).start();
-      });
+      Animated.loop(
+        Animated.timing(shimmerAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        })
+      ).start();
     }
-  }, [visible, scaleAnim, rotateAnim, gemScaleAnim, starAnims, glowAnim]);
+  }, [visible, scaleAnim, gemScaleAnim, shimmerAnim]);
 
   const handleDismiss = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -108,16 +68,6 @@ export default function LevelUpModal({ visible, level, onDismiss }: LevelUpModal
       onDismiss();
     });
   };
-
-  const rotateInterpolate = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['-5deg', '5deg'],
-  });
-
-  const glowOpacity = glowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.5, 1],
-  });
 
   return (
     <Modal
@@ -131,67 +81,40 @@ export default function LevelUpModal({ visible, level, onDismiss }: LevelUpModal
           style={[
             styles.container,
             {
-              transform: [
-                { scale: scaleAnim },
-                { rotate: rotateInterpolate },
-              ],
+              transform: [{ scale: scaleAnim }],
             },
           ]}
         >
-          {starAnims.map((anim, index) => {
-            const angle = (index / 8) * Math.PI * 2;
-            const radius = 140;
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
-            
-            return (
-              <Animated.View
-                key={index}
-                style={[
-                  styles.floatingStar,
-                  {
-                    transform: [
-                      { translateX: x },
-                      { translateY: y },
-                      { scale: anim },
-                      { 
-                        rotate: anim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: ['0deg', '360deg'],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              >
-                <Star size={20} color="#fbbf24" fill="#fbbf24" />
-              </Animated.View>
-            );
-          })}
-
           <LinearGradient
-            colors={['#1e1b4b', '#312e81', '#4c1d95']}
+            colors={['#0f172a', '#1e3a5f', '#0f172a']}
             style={styles.modalContent}
           >
-            <Animated.View style={[styles.glowRing, { opacity: glowOpacity }]} />
+            <View style={styles.headerAccent} />
             
             <View style={styles.levelUpHeader}>
-              <ChevronUp size={32} color="#22c55e" />
+              <ChevronUp size={28} color="#22c55e" />
               <Text style={styles.levelUpText}>LEVEL UP!</Text>
-              <ChevronUp size={32} color="#22c55e" />
+              <ChevronUp size={28} color="#22c55e" />
             </View>
 
             <View style={styles.levelBadgeContainer}>
               <LinearGradient
-                colors={['#8b5cf6', '#7c3aed', '#6d28d9']}
+                colors={['#3b82f6', '#2563eb', '#1d4ed8']}
                 style={styles.levelBadge}
               >
                 <Text style={styles.levelNumber}>{level}</Text>
               </LinearGradient>
+              <View style={styles.levelGlow} />
             </View>
 
+            <View style={styles.divider} />
+
             <View style={styles.rewardSection}>
-              <Text style={styles.rewardTitle}>REWARD</Text>
+              <View style={styles.rewardHeader}>
+                <Sparkles size={16} color="#fbbf24" />
+                <Text style={styles.rewardTitle}>REWARD</Text>
+                <Sparkles size={16} color="#fbbf24" />
+              </View>
               
               <Animated.View
                 style={[
@@ -200,16 +123,14 @@ export default function LevelUpModal({ visible, level, onDismiss }: LevelUpModal
                 ]}
               >
                 <LinearGradient
-                  colors={['#1e3a5f', '#2563eb', '#1e3a5f']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
+                  colors={['rgba(96, 165, 250, 0.15)', 'rgba(96, 165, 250, 0.05)']}
                   style={styles.gemContainer}
                 >
                   <View style={styles.gemIconWrapper}>
-                    <Zap size={28} color="#60a5fa" fill="#60a5fa" />
+                    <Gem size={32} color="#60a5fa" fill="#60a5fa" />
                   </View>
                   <Text style={styles.gemAmount}>+50</Text>
-                  <Text style={styles.gemLabel}>GEMS</Text>
+                  <Text style={styles.gemLabel}>DIAMONDS</Text>
                 </LinearGradient>
               </Animated.View>
             </View>
@@ -223,7 +144,7 @@ export default function LevelUpModal({ visible, level, onDismiss }: LevelUpModal
                 colors={['#22c55e', '#16a34a']}
                 style={styles.continueGradient}
               >
-                <Text style={styles.continueText}>AWESOME!</Text>
+                <Text style={styles.continueText}>CONTINUE</Text>
               </LinearGradient>
             </TouchableOpacity>
           </LinearGradient>
@@ -236,145 +157,138 @@ export default function LevelUpModal({ visible, level, onDismiss }: LevelUpModal
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   container: {
     width: SCREEN_WIDTH * 0.85,
-    maxWidth: 340,
+    maxWidth: 320,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  floatingStar: {
-    position: 'absolute',
-    zIndex: 10,
-  },
   modalContent: {
     width: '100%',
-    borderRadius: 24,
+    borderRadius: 20,
     padding: 24,
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#8b5cf6',
+    borderWidth: 2,
+    borderColor: 'rgba(96, 165, 250, 0.4)',
     overflow: 'hidden',
   },
-  glowRing: {
+  headerAccent: {
     position: 'absolute',
-    top: -50,
-    left: -50,
-    right: -50,
-    bottom: -50,
-    borderRadius: 200,
-    borderWidth: 30,
-    borderColor: 'rgba(139, 92, 246, 0.3)',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    backgroundColor: '#22c55e',
   },
   levelUpHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+    marginTop: 8,
     gap: 8,
   },
   levelUpText: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '900' as const,
     color: '#22c55e',
-    letterSpacing: 3,
-    textShadowColor: 'rgba(34, 197, 94, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
+    letterSpacing: 2,
   },
   levelBadgeContainer: {
-    marginBottom: 24,
-    shadowColor: '#8b5cf6',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 20,
-    elevation: 10,
+    marginBottom: 20,
+    position: 'relative',
   },
   levelBadge: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 4,
-    borderColor: '#a78bfa',
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  levelGlow: {
+    position: 'absolute',
+    top: -10,
+    left: -10,
+    right: -10,
+    bottom: -10,
+    borderRadius: 55,
+    borderWidth: 2,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
   },
   levelNumber: {
-    fontSize: 48,
+    fontSize: 44,
     fontWeight: '900' as const,
     color: '#fff',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 4,
+  },
+  divider: {
+    width: '80%',
+    height: 2,
+    backgroundColor: 'rgba(96, 165, 250, 0.2)',
+    borderRadius: 1,
+    marginBottom: 16,
   },
   rewardSection: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
+  },
+  rewardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
   },
   rewardTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '800' as const,
-    color: '#94a3b8',
+    color: '#fbbf24',
     letterSpacing: 2,
-    marginBottom: 12,
   },
   gemReward: {
     width: '100%',
   },
   gemContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 16,
-    gap: 12,
-    borderWidth: 2,
-    borderColor: 'rgba(96, 165, 250, 0.4)',
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.3)',
   },
   gemIconWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(96, 165, 250, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: 8,
   },
   gemAmount: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '900' as const,
     color: '#60a5fa',
-    textShadowColor: 'rgba(96, 165, 250, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
   },
   gemLabel: {
-    fontSize: 18,
-    fontWeight: '800' as const,
-    color: '#93c5fd',
+    fontSize: 12,
+    fontWeight: '700' as const,
+    color: '#94a3b8',
     letterSpacing: 1,
+    marginTop: 2,
   },
   continueButton: {
     width: '100%',
-    borderRadius: 16,
+    borderRadius: 14,
     overflow: 'hidden',
-    shadowColor: '#22c55e',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
   },
   continueGradient: {
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: 'center',
   },
   continueText: {
-    fontSize: 20,
-    fontWeight: '900' as const,
+    fontSize: 16,
+    fontWeight: '800' as const,
     color: '#fff',
-    letterSpacing: 2,
+    letterSpacing: 1,
   },
 });

@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView, Dimensions, Modal, Pressable } from 'react-native';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gem, Crown, Plus } from 'lucide-react-native';
@@ -51,6 +51,26 @@ export default function HomeScreen() {
   const [showGemsTooltip, setShowGemsTooltip] = useState(false);
   
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const titleScaleAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const breatheAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(titleScaleAnim, {
+          toValue: 1.03,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(titleScaleAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    breatheAnimation.start();
+    return () => breatheAnimation.stop();
+  }, [titleScaleAnim]);
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
@@ -202,7 +222,7 @@ export default function HomeScreen() {
 
       </View>
 
-      <View style={styles.logoContainer}>
+      <Animated.View style={[styles.logoContainer, { transform: [{ scale: titleScaleAnim }] }]}>
         <View style={styles.logoWrapper}>
           <Text style={styles.logoText}>SKILL</Text>
           <View style={styles.logoBolt}>
@@ -210,7 +230,7 @@ export default function HomeScreen() {
           </View>
         </View>
         <Text style={styles.logoSubtext}>BOUND</Text>
-      </View>
+      </Animated.View>
 
       <View style={styles.sectionDivider}>
         <View style={styles.dividerLine} />

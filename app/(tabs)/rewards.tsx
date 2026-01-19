@@ -104,11 +104,10 @@ export default function RewardsScreen() {
     const totalItems = SLOT_ITEMS.length;
     const fullSpins = 4;
     
-    // To show item at winningIndex in the MIDDLE slot:
-    // - At scrollAnim = 0, item 0 is at top, item 1 is at middle
-    // - To have item N in middle, item N-1 must be at top
-    // - So scroll to position (N-1) * ITEM_HEIGHT (plus full spins)
-    const targetPosition = (fullSpins * totalItems + winningIndex) * ITEM_HEIGHT;
+    // Spinning DOWNWARD (positive translateY)
+    // The middle slot shows the winning item
+    // We need to offset by 1 item since middle is at index 1 visually
+    const targetPosition = (fullSpins * totalItems + winningIndex + 1) * ITEM_HEIGHT;
 
     scrollAnim.setValue(0);
     
@@ -154,7 +153,8 @@ export default function RewardsScreen() {
     });
   }, [canSpin, isSpinning, scrollAnim, spinResultScaleAnim, winPopupScaleAnim, addGems, addMoney, recordSpin]);
 
-  const extendedItems = [...SLOT_ITEMS, ...SLOT_ITEMS, ...SLOT_ITEMS, ...SLOT_ITEMS, ...SLOT_ITEMS, ...SLOT_ITEMS];
+  const reversedItems = [...SLOT_ITEMS].reverse();
+  const extendedItems = [...reversedItems, ...reversedItems, ...reversedItems, ...reversedItems, ...reversedItems, ...reversedItems];
 
   return (
     <View style={styles.container}>
@@ -228,7 +228,7 @@ export default function RewardsScreen() {
                         transform: [{
                           translateY: scrollAnim.interpolate({
                             inputRange: [0, 1],
-                            outputRange: [0, -1],
+                            outputRange: [0, 1],
                           }),
                         }],
                       },
@@ -613,7 +613,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   slotReel: {
-    paddingTop: 0,
+    paddingTop: ITEM_HEIGHT,
   },
   slotItem: {
     height: ITEM_HEIGHT,

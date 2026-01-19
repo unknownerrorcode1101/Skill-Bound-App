@@ -961,15 +961,21 @@ export default function BallBlasterSurvival() {
     { amount: 100000, color: '#fbbf24', isGold: true },
   ];
 
-  const handleDevDrainDiamonds = () => {
-    const drainAmount = 100000000;
-    if (gems >= drainAmount) {
-      addGems(-drainAmount);
-      console.log('[DEV TEST] Drained 100M diamonds');
-    } else {
-      console.log('[DEV TEST] Not enough diamonds to drain 100M');
+  // ========== DEV TESTING ONLY - REMOVE BEFORE PRODUCTION ==========
+  const handleDevDrainAllDiamonds = () => {
+    if (gems > 0) {
+      addGems(-gems);
+      console.log('[DEV TEST] Drained ALL diamonds:', gems);
     }
   };
+
+  const handleDevDrainAllMoney = () => {
+    if (money > 0) {
+      spendMoney(money);
+      console.log('[DEV TEST] Drained ALL money:', money);
+    }
+  };
+  // ========== END DEV TESTING ==========
 
   const canAffordWager = wagerType === 'diamonds' ? gems >= wagerAmount : money >= wagerAmount;
 
@@ -1115,15 +1121,29 @@ export default function BallBlasterSurvival() {
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* DEV/TEST: Drain 100M diamonds button */}
-        <TouchableOpacity
-          style={[styles.devDrainButton, gems < 100000000 && styles.devDrainButtonDisabled]}
-          onPress={handleDevDrainDiamonds}
-          activeOpacity={0.8}
-          disabled={gems < 100000000}
-        >
-          <Text style={styles.devDrainButtonText}>[TEST] DRAIN 100M 💎</Text>
-        </TouchableOpacity>
+        {/* ========== DEV TESTING ONLY - REMOVE BEFORE PRODUCTION ========== */}
+        <View style={styles.devTestingContainer}>
+          <Text style={styles.devTestingLabel}>⚠️ DEV TESTING ONLY ⚠️</Text>
+          <View style={styles.devButtonsRow}>
+            <TouchableOpacity
+              style={[styles.devDrainButton, gems <= 0 && styles.devDrainButtonDisabled]}
+              onPress={handleDevDrainAllDiamonds}
+              activeOpacity={0.8}
+              disabled={gems <= 0}
+            >
+              <Text style={styles.devDrainButtonText}>DRAIN ALL 💎</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.devDrainButtonMoney, money <= 0 && styles.devDrainButtonDisabled]}
+              onPress={handleDevDrainAllMoney}
+              activeOpacity={0.8}
+              disabled={money <= 0}
+            >
+              <Text style={styles.devDrainButtonText}>DRAIN ALL 💵</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        {/* ========== END DEV TESTING ========== */}
       </View>
     </View>
   );
@@ -2078,25 +2098,55 @@ const styles = StyleSheet.create({
     color: '#fff',
     letterSpacing: 2,
   },
-  devDrainButton: {
-    marginTop: 16,
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+  devTestingContainer: {
+    marginTop: 20,
+    padding: 12,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
     borderRadius: 12,
     borderWidth: 2,
     borderColor: '#ef4444',
     borderStyle: 'dashed' as const,
   },
-  devDrainButtonDisabled: {
-    opacity: 0.4,
-    borderColor: '#64748b',
-  },
-  devDrainButtonText: {
-    fontSize: 12,
-    fontWeight: '700' as const,
+  devTestingLabel: {
+    fontSize: 10,
+    fontWeight: '800' as const,
     color: '#ef4444',
     textAlign: 'center' as const,
     letterSpacing: 1,
+    marginBottom: 10,
+  },
+  devButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'center',
+  },
+  devDrainButton: {
+    flex: 1,
+    backgroundColor: 'rgba(96, 165, 250, 0.2)',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#60a5fa',
+  },
+  devDrainButtonMoney: {
+    flex: 1,
+    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#22c55e',
+  },
+  devDrainButtonDisabled: {
+    opacity: 0.3,
+    borderColor: '#64748b',
+  },
+  devDrainButtonText: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    color: '#fff',
+    textAlign: 'center' as const,
+    letterSpacing: 0.5,
   },
 });

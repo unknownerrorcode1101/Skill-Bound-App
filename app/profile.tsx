@@ -30,7 +30,7 @@ const PRESET_AVATARS = [
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { 
-    matches, money, crowns, level, xpProgress, xpBarColors, 
+    matches, money, crowns, level, xpProgress, xpBarColors, xpBadgeColors,
     currentLevelXp, xpRequiredForNextLevel, profilePicture, setProfilePicture,
     username, setUsername
   } = useGame();
@@ -154,7 +154,7 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.levelBadgeLarge}>
               <LinearGradient
-                colors={['#8b5cf6', '#7c3aed']}
+                colors={[xpBadgeColors[0], xpBadgeColors[1]]}
                 style={styles.levelBadgeInner}
               >
                 <Text style={styles.levelTextLarge}>{level}</Text>

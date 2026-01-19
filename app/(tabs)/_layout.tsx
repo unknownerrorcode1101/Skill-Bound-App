@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Gamepad2, Trophy, ShoppingBag, Gift, ClipboardList } from "lucide-react-native";
+import { Gamepad2, Trophy, ShoppingBag, Sparkles, BarChart3 } from "lucide-react-native";
 import { View, StyleSheet } from "react-native";
 import React from "react";
 
@@ -12,11 +12,11 @@ interface TabIconProps {
 function TabIconWrapper({ focused, children }: TabIconProps) {
   return (
     <View style={styles.tabIconWrapper}>
-      {focused && <View style={styles.leftBorder} />}
-      <View style={styles.tabIconContainer}>
+      <View style={[styles.leftBorder, focused && styles.borderActive]} />
+      <View style={[styles.tabIconContainer, focused && styles.tabIconContainerActive]}>
         {children}
       </View>
-      {focused && <View style={styles.rightBorder} />}
+      <View style={[styles.rightBorder, focused && styles.borderActive]} />
     </View>
   );
 }
@@ -48,10 +48,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="results"
         options={{
-          title: "RESULTS",
+          title: "STATS",
           tabBarIcon: ({ color, focused }) => (
             <TabIconWrapper color={color} focused={focused}>
-              <ClipboardList color={color} size={22} />
+              <BarChart3 color={focused ? '#60a5fa' : color} size={20} strokeWidth={2.5} />
             </TabIconWrapper>
           ),
         }}
@@ -62,7 +62,7 @@ export default function TabLayout() {
           title: "RANKS",
           tabBarIcon: ({ color, focused }) => (
             <TabIconWrapper color={color} focused={focused}>
-              <Trophy color={color} size={22} />
+              <Trophy color={focused ? '#fbbf24' : color} size={20} strokeWidth={2.5} />
             </TabIconWrapper>
           ),
         }}
@@ -73,28 +73,29 @@ export default function TabLayout() {
           title: "PLAY",
           tabBarIcon: ({ color, focused }) => (
             <View style={styles.playTabWrapper}>
-              {focused && <View style={styles.playLeftBorder} />}
+              <View style={[styles.playLeftBorder, focused && styles.borderActive]} />
               <View style={[styles.playIconContainer, focused && styles.playIconActive]}>
-                <Gamepad2 color={focused ? '#fff' : color} size={22} />
+                <Gamepad2 color={focused ? '#fff' : color} size={22} strokeWidth={2.5} />
               </View>
-              {focused && <View style={styles.playRightBorder} />}
+              <View style={[styles.playRightBorder, focused && styles.borderActive]} />
             </View>
           ),
           tabBarLabelStyle: {
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: '800' as const,
-            letterSpacing: 1,
+            letterSpacing: 0.5,
             textAlign: 'center' as const,
+            marginTop: 6,
           },
         }}
       />
       <Tabs.Screen
         name="rewards"
         options={{
-          title: "REWARDS",
+          title: "SPIN",
           tabBarIcon: ({ color, focused }) => (
             <TabIconWrapper color={color} focused={focused}>
-              <Gift color={color} size={22} />
+              <Sparkles color={focused ? '#f59e0b' : color} size={20} strokeWidth={2.5} />
             </TabIconWrapper>
           ),
         }}
@@ -102,10 +103,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="store"
         options={{
-          title: "STORE",
+          title: "SHOP",
           tabBarIcon: ({ color, focused }) => (
             <TabIconWrapper color={color} focused={focused}>
-              <ShoppingBag color={color} size={22} />
+              <ShoppingBag color={focused ? '#22c55e' : color} size={20} strokeWidth={2.5} />
             </TabIconWrapper>
           ),
         }}
@@ -119,67 +120,73 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 36,
-    marginTop: -4,
+    height: 32,
   },
   tabIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  tabIconContainerActive: {
+    backgroundColor: 'rgba(96, 165, 250, 0.12)',
   },
   leftBorder: {
     position: 'absolute',
-    left: -18,
-    height: 32,
+    left: -14,
+    height: 28,
     width: 2,
-    backgroundColor: '#60a5fa',
+    backgroundColor: 'transparent',
     borderRadius: 1,
   },
   rightBorder: {
     position: 'absolute',
-    right: -18,
-    height: 32,
+    right: -14,
+    height: 28,
     width: 2,
-    backgroundColor: '#60a5fa',
+    backgroundColor: 'transparent',
     borderRadius: 1,
+  },
+  borderActive: {
+    backgroundColor: '#60a5fa',
   },
   playTabWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -4,
   },
   playLeftBorder: {
     position: 'absolute',
-    left: -22,
-    height: 36,
+    left: -18,
+    height: 32,
     width: 2,
-    backgroundColor: '#60a5fa',
+    backgroundColor: 'transparent',
     borderRadius: 1,
   },
   playRightBorder: {
     position: 'absolute',
-    right: -22,
-    height: 36,
+    right: -18,
+    height: 32,
     width: 2,
-    backgroundColor: '#60a5fa',
+    backgroundColor: 'transparent',
     borderRadius: 1,
   },
   playIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: 'rgba(96, 165, 250, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -2,
   },
   playIconActive: {
     backgroundColor: '#3b82f6',
     shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    elevation: 8,
-    transform: [{ scale: 1.05 }],
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 6,
   },
 });
