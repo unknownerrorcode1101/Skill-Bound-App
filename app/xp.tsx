@@ -31,6 +31,9 @@ export default function XPScreen() {
     xpBarColorId,
     xpBarColors,
     setXpBarColor,
+    xpBadgeColorId,
+    xpBadgeColors,
+    setXpBadgeColor,
   } = useGame();
 
   const [showColorModal, setShowColorModal] = useState(false);
@@ -74,7 +77,7 @@ export default function XPScreen() {
         <View style={styles.levelSection}>
           <View style={styles.levelCircleWrapper}>
             <LinearGradient
-              colors={[xpBarColors[0], xpBarColors[1], xpBarColors[1]]}
+              colors={[xpBadgeColors[0], xpBadgeColors[1], xpBadgeColors[1]]}
               style={styles.levelCircle}
             >
               <Text style={styles.levelNumber}>{level}</Text>
@@ -312,7 +315,7 @@ export default function XPScreen() {
 
               <View style={styles.colorModalGrid}>
                 {XP_BAR_COLORS.map((colorOption) => {
-                  const isSelected = xpBarColorId === colorOption.id;
+                  const isSelected = xpBadgeColorId === colorOption.id;
                   return (
                     <TouchableOpacity
                       key={colorOption.id}
@@ -321,7 +324,7 @@ export default function XPScreen() {
                         isSelected && styles.colorModalOptionSelected,
                       ]}
                       onPress={() => {
-                        setXpBarColor(colorOption.id);
+                        setXpBadgeColor(colorOption.id);
                         setShowColorModal(false);
                       }}
                       activeOpacity={0.7}
@@ -346,7 +349,7 @@ export default function XPScreen() {
               <View style={styles.colorModalPreview}>
                 <Text style={styles.colorModalPreviewLabel}>Preview</Text>
                 <LinearGradient
-                  colors={[xpBarColors[0], xpBarColors[1]]}
+                  colors={[xpBadgeColors[0], xpBadgeColors[1]]}
                   style={styles.colorModalPreviewCircle}
                 >
                   <Text style={styles.colorModalPreviewLevel}>{level}</Text>

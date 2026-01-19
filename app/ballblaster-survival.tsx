@@ -961,6 +961,16 @@ export default function BallBlasterSurvival() {
     { amount: 100000, color: '#fbbf24', isGold: true },
   ];
 
+  const handleDevDrainDiamonds = () => {
+    const drainAmount = 100000000;
+    if (gems >= drainAmount) {
+      addGems(-drainAmount);
+      console.log('[DEV TEST] Drained 100M diamonds');
+    } else {
+      console.log('[DEV TEST] Not enough diamonds to drain 100M');
+    }
+  };
+
   const canAffordWager = wagerType === 'diamonds' ? gems >= wagerAmount : money >= wagerAmount;
 
   const handleStartWithWager = () => {
@@ -1103,6 +1113,16 @@ export default function BallBlasterSurvival() {
             <Play size={28} color="#fff" fill="#fff" />
             <Text style={styles.wagerPlayButtonText}>START GAME</Text>
           </LinearGradient>
+        </TouchableOpacity>
+
+        {/* DEV/TEST: Drain 100M diamonds button */}
+        <TouchableOpacity
+          style={[styles.devDrainButton, gems < 100000000 && styles.devDrainButtonDisabled]}
+          onPress={handleDevDrainDiamonds}
+          activeOpacity={0.8}
+          disabled={gems < 100000000}
+        >
+          <Text style={styles.devDrainButtonText}>[TEST] DRAIN 100M 💎</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -2057,5 +2077,26 @@ const styles = StyleSheet.create({
     fontWeight: '800' as const,
     color: '#fff',
     letterSpacing: 2,
+  },
+  devDrainButton: {
+    marginTop: 16,
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#ef4444',
+    borderStyle: 'dashed' as const,
+  },
+  devDrainButtonDisabled: {
+    opacity: 0.4,
+    borderColor: '#64748b',
+  },
+  devDrainButtonText: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+    color: '#ef4444',
+    textAlign: 'center' as const,
+    letterSpacing: 1,
   },
 });

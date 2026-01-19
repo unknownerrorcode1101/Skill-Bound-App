@@ -52,7 +52,6 @@ export default function RewardsScreen() {
   const winPopupScaleAnim = useRef(new Animated.Value(0)).current;
   const spinResultScaleAnim = useRef(new Animated.Value(0)).current;
   const spinGlowAnim = useRef(new Animated.Value(0)).current;
-  const buttonPulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const updateCooldown = () => {
@@ -86,22 +85,7 @@ export default function RewardsScreen() {
     }
   }, [canSpin, isSpinning, spinGlowAnim]);
 
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(buttonPulseAnim, {
-          toValue: 1.03,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(buttonPulseAnim, {
-          toValue: 0.97,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, [buttonPulseAnim]);
+
 
   const handleSpin = useCallback(() => {
     if (!canSpin || isSpinning) return;
@@ -118,7 +102,9 @@ export default function RewardsScreen() {
     
     const totalItems = SLOT_ITEMS.length;
     const fullSpins = 4;
-    const targetPosition = (fullSpins * totalItems + randomSegmentIndex) * ITEM_HEIGHT;
+    // Position so winning item lands in MIDDLE of the 3 visible slots
+    // Middle slot is at offset 1, so we subtract 1 from the target index
+    const targetPosition = (fullSpins * totalItems + randomSegmentIndex - 1) * ITEM_HEIGHT;
 
     scrollAnim.setValue(0);
     
@@ -478,15 +464,13 @@ export default function RewardsScreen() {
                   </View>
                 )}
 
-                <Animated.View style={{ transform: [{ scale: buttonPulseAnim }] }}>
-                  <TouchableOpacity
-                    style={styles.awesomeButton}
-                    onPress={() => setShowWinPopup(false)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.awesomeButtonText}>AWESOME!</Text>
-                  </TouchableOpacity>
-                </Animated.View>
+                <TouchableOpacity
+                  style={styles.awesomeButton}
+                  onPress={() => setShowWinPopup(false)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.awesomeButtonText}>AWESOME!</Text>
+                </TouchableOpacity>
               </LinearGradient>
             </Animated.View>
           </Pressable>

@@ -52,7 +52,6 @@ export default function HomeScreen() {
   
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const shimmerAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.loop(
@@ -69,22 +68,7 @@ export default function HomeScreen() {
         }),
       ])
     ).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.03,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 0.97,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, [shimmerAnim, pulseAnim]);
+  }, [shimmerAnim]);
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
@@ -243,7 +227,7 @@ export default function HomeScreen() {
 
       </View>
 
-      <Animated.View style={[styles.logoContainer, { transform: [{ scale: pulseAnim }] }]}>
+      <View style={styles.logoContainer}>
         <View style={styles.logoWrapper}>
           <Text style={styles.logoText}>SKILL</Text>
           <View style={styles.logoBolt}>
@@ -251,7 +235,7 @@ export default function HomeScreen() {
           </View>
         </View>
         <Text style={styles.logoSubtext}>BOUND</Text>
-      </Animated.View>
+      </View>
 
       <View style={styles.sectionDivider}>
         <View style={styles.dividerLine} />

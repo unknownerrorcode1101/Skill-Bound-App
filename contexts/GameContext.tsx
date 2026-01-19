@@ -9,6 +9,7 @@ const XP_KEY = 'game_xp';
 const GEMS_KEY = 'game_gems';
 const LEVEL_KEY = 'game_level';
 const XP_BAR_COLOR_KEY = 'xp_bar_color';
+const XP_BADGE_COLOR_KEY = 'xp_badge_color';
 const LAST_SPIN_KEY = 'last_spin_time';
 const LAST_DAILY_CLAIM_KEY = 'last_daily_claim';
 const DAILY_STREAK_KEY = 'daily_streak';
@@ -84,6 +85,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
   const [showLevelUp, setShowLevelUp] = useState<boolean>(false);
   const [newLevel, setNewLevel] = useState<number>(1);
   const [xpBarColorId, setXpBarColorId] = useState<string>('green');
+  const [xpBadgeColorId, setXpBadgeColorId] = useState<string>('purple');
   const [lastSpinTime, setLastSpinTime] = useState<number | null>(null);
   const [lastDailyClaim, setLastDailyClaim] = useState<string | null>(null);
   const [dailyStreak, setDailyStreak] = useState<number>(0);
@@ -133,6 +135,11 @@ export const [GameProvider, useGame] = createContextHook(() => {
       const storedColor = await AsyncStorage.getItem(XP_BAR_COLOR_KEY);
       if (storedColor) {
         setXpBarColorId(JSON.parse(storedColor));
+      }
+
+      const storedBadgeColor = await AsyncStorage.getItem(XP_BADGE_COLOR_KEY);
+      if (storedBadgeColor) {
+        setXpBadgeColorId(JSON.parse(storedBadgeColor));
       }
 
       const storedLastSpin = await AsyncStorage.getItem(LAST_SPIN_KEY);
@@ -303,7 +310,15 @@ export const [GameProvider, useGame] = createContextHook(() => {
     });
   }, []);
 
+  const setXpBadgeColor = useCallback((colorId: string) => {
+    setXpBadgeColorId(colorId);
+    AsyncStorage.setItem(XP_BADGE_COLOR_KEY, JSON.stringify(colorId)).catch(error => {
+      console.log('Error saving XP badge color:', error);
+    });
+  }, []);
+
   const xpBarColors = XP_BAR_COLORS.find(c => c.id === xpBarColorId)?.colors || XP_BAR_COLORS[0].colors;
+  const xpBadgeColors = XP_BAR_COLORS.find(c => c.id === xpBadgeColorId)?.colors || XP_BAR_COLORS[3].colors;
 
   const canSpin = !lastSpinTime || (Date.now() - lastSpinTime >= SPIN_COOLDOWN_MS);
   
@@ -442,6 +457,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
     newLevel,
     xpBarColorId,
     xpBarColors,
+    xpBadgeColorId,
+    xpBadgeColors,
     profilePicture,
     username,
     loadMatches,
@@ -455,6 +472,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     spendMoney,
     dismissLevelUp,
     setXpBarColor,
+    setXpBadgeColor,
     setProfilePicture,
     setUsername,
     canSpin,
