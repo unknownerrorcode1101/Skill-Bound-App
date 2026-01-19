@@ -98,23 +98,28 @@ export default function RewardsScreen() {
     setShowSpinResult(false);
     spinResultScaleAnim.setValue(0);
 
-    const randomSegmentIndex = Math.floor(Math.random() * SLOT_ITEMS.length);
+    const winningIndex = Math.floor(Math.random() * SLOT_ITEMS.length);
+    const winningPrize = SLOT_ITEMS[winningIndex];
     
     const totalItems = SLOT_ITEMS.length;
     const fullSpins = 4;
-    // Position so winning item lands in MIDDLE of the 3 visible slots
-    // Middle slot is at offset 1, so we subtract 1 from the target index
-    const targetPosition = (fullSpins * totalItems + randomSegmentIndex - 1) * ITEM_HEIGHT;
+    
+    // To show item at winningIndex in the MIDDLE slot:
+    // - At scrollAnim = 0, item 0 is at top, item 1 is at middle
+    // - To have item N in middle, item N-1 must be at top
+    // - So scroll to position (N-1) * ITEM_HEIGHT (plus full spins)
+    const targetPosition = (fullSpins * totalItems + winningIndex) * ITEM_HEIGHT;
 
     scrollAnim.setValue(0);
+    
+    console.log(`Spinning to win: ${winningPrize.label} (index ${winningIndex})`);
     
     Animated.timing(scrollAnim, {
       toValue: targetPosition,
       duration: 3500,
       useNativeDriver: true,
     }).start(() => {
-      const segment = SLOT_ITEMS[randomSegmentIndex];
-      setResultSegment(segment);
+      setResultSegment(winningPrize);
       setIsSpinning(false);
       setShowSpinResult(true);
 
@@ -122,13 +127,14 @@ export default function RewardsScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      if (segment.type === 'gems') {
-        addGems(segment.amount);
+      if (winningPrize.type === 'gems') {
+        addGems(winningPrize.amount);
       } else {
-        addMoney(segment.amount);
+        addMoney(winningPrize.amount);
       }
 
       recordSpin();
+      console.log(`Prize awarded: ${winningPrize.label}`);
 
       Animated.spring(spinResultScaleAnim, {
         toValue: 1,

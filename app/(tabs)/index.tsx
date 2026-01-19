@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView, Dimensions, Modal, Pressable } from 'react-native';
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gem, Crown, Plus } from 'lucide-react-native';
@@ -8,7 +8,7 @@ import { useGame } from '@/contexts/GameContext';
 import FloatingGiftButton from '@/components/FloatingGiftButton';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
+const CARD_WIDTH = (SCREEN_WIDTH - 52) / 2;
 
 const formatCompact = (amount: number): string => {
   if (amount >= 1000000000) {
@@ -51,24 +51,6 @@ export default function HomeScreen() {
   const [showGemsTooltip, setShowGemsTooltip] = useState(false);
   
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const shimmerAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(shimmerAnim, {
-          toValue: 1,
-          duration: 2500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(shimmerAnim, {
-          toValue: 0,
-          duration: 2500,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, [shimmerAnim]);
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
@@ -96,13 +78,6 @@ export default function HomeScreen() {
   const handlePlayBlackjack = () => {
     router.push('/blackjack' as any);
   };
-
-
-
-  const shimmerOpacity = shimmerAnim.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0.3, 0.7, 0.3],
-  });
 
   return (
     <View style={styles.container}>
@@ -231,7 +206,7 @@ export default function HomeScreen() {
         <View style={styles.logoWrapper}>
           <Text style={styles.logoText}>SKILL</Text>
           <View style={styles.logoBolt}>
-            <Gem size={32} color="#60a5fa" fill="#60a5fa" />
+            <Gem size={28} color="#60a5fa" fill="#60a5fa" />
           </View>
         </View>
         <Text style={styles.logoSubtext}>BOUND</Text>
@@ -264,12 +239,12 @@ export default function HomeScreen() {
                 >
                   <View style={styles.starsContainer}>
                     {[...Array(12)].map((_, i) => (
-                      <Animated.View 
+                      <View 
                         key={i} 
                         style={[
                           styles.star,
                           { 
-                            opacity: shimmerOpacity,
+                            opacity: 0.5,
                             left: `${5 + (i * 8)}%`,
                             top: `${10 + ((i % 4) * 22)}%`,
                           }
@@ -349,12 +324,12 @@ export default function HomeScreen() {
                 >
                   <View style={styles.starsContainer}>
                     {[...Array(8)].map((_, i) => (
-                      <Animated.View 
+                      <View 
                         key={i} 
                         style={[
                           styles.star,
                           { 
-                            opacity: shimmerOpacity,
+                            opacity: 0.5,
                             left: `${10 + (i * 11)}%`,
                             top: `${8 + ((i % 3) * 25)}%`,
                           }
@@ -637,14 +612,14 @@ const styles = StyleSheet.create({
 
   logoContainer: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: 16,
   },
   logoWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   logoText: {
-    fontSize: 42,
+    fontSize: 36,
     fontWeight: '900' as const,
     color: '#fff',
     letterSpacing: 4,
@@ -654,20 +629,20 @@ const styles = StyleSheet.create({
   },
   logoBolt: {
     marginLeft: 4,
-    marginTop: -8,
+    marginTop: -6,
   },
   logoSubtext: {
-    fontSize: 38,
+    fontSize: 32,
     fontWeight: '900' as const,
     color: '#94a3b8',
-    letterSpacing: 12,
-    marginTop: -8,
+    letterSpacing: 10,
+    marginTop: -6,
   },
   gamesContainer: {
     flex: 1,
   },
   gamesContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     paddingBottom: 24,
   },
   sectionDivider: {
@@ -684,34 +659,35 @@ const styles = StyleSheet.create({
   gamesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    justifyContent: 'center',
+    gap: 14,
+    justifyContent: 'space-between',
   },
   gameCardWrapper: {
     width: CARD_WIDTH,
   },
   gameCard: {
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: 'hidden',
     backgroundColor: '#0f172a',
-    borderWidth: 1,
-    borderColor: 'rgba(96, 165, 250, 0.15)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(96, 165, 250, 0.2)',
   },
   gameTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800' as const,
     color: '#fff',
     letterSpacing: 0.5,
     paddingHorizontal: 10,
     paddingTop: 10,
-    paddingBottom: 8,
+    paddingBottom: 6,
+    textAlign: 'center' as const,
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
   gamePreview: {
-    height: CARD_WIDTH * 0.85,
-    borderRadius: 8,
+    height: CARD_WIDTH * 0.8,
+    borderRadius: 10,
     overflow: 'hidden',
     marginHorizontal: 8,
     marginBottom: 8,
@@ -947,25 +923,26 @@ const styles = StyleSheet.create({
     borderColor: '#475569',
   },
   comingSoonCard: {
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: 'hidden',
     backgroundColor: '#0f172a',
     opacity: 0.7,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: 'rgba(71, 85, 105, 0.2)',
   },
   comingSoonTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800' as const,
     color: '#64748b',
     letterSpacing: 0.5,
     paddingHorizontal: 10,
     paddingTop: 10,
-    paddingBottom: 8,
+    paddingBottom: 6,
+    textAlign: 'center' as const,
   },
   comingSoonPreview: {
-    height: CARD_WIDTH * 0.85,
-    borderRadius: 8,
+    height: CARD_WIDTH * 0.8,
+    borderRadius: 10,
     overflow: 'hidden',
     marginHorizontal: 8,
     marginBottom: 8,
