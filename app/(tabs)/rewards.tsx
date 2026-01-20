@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Platform, ScrollView, Modal, Pressable } from 'react-native';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform, ScrollView, Modal, Pressable } from 'react-native';
+import { useState, useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Gem, Clock, Sparkles, Star, ExternalLink } from 'lucide-react-native';
+import { Gem, Clock, Sparkles, Star, ExternalLink, Trophy } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useGame } from '@/contexts/GameContext';
 import * as Haptics from 'expo-haptics';
@@ -11,19 +11,15 @@ import FloatingGiftButton from '@/components/FloatingGiftButton';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const SLOT_ITEMS = [
-  { id: 1, type: 'gems', amount: 5, color: '#3b82f6', label: '💎 5' },
-  { id: 2, type: 'money', amount: 50, color: '#22c55e', label: '$50' },
-  { id: 3, type: 'gems', amount: 10, color: '#60a5fa', label: '💎 10' },
-  { id: 4, type: 'money', amount: 100, color: '#16a34a', label: '$100' },
-  { id: 5, type: 'gems', amount: 25, color: '#2563eb', label: '💎 25' },
-  { id: 6, type: 'money', amount: 250, color: '#15803d', label: '$250' },
-  { id: 7, type: 'gems', amount: 50, color: '#1d4ed8', label: '💎 50' },
-  { id: 8, type: 'money', amount: 500, color: '#166534', label: '$500' },
+  { id: 1, type: 'gems', amount: 5, color: '#3b82f6', icon: '💎' },
+  { id: 2, type: 'money', amount: 50, color: '#22c55e', icon: '$' },
+  { id: 3, type: 'gems', amount: 10, color: '#60a5fa', icon: '💎' },
+  { id: 4, type: 'money', amount: 100, color: '#16a34a', icon: '$' },
+  { id: 5, type: 'gems', amount: 25, color: '#2563eb', icon: '💎' },
+  { id: 6, type: 'money', amount: 250, color: '#15803d', icon: '$' },
+  { id: 7, type: 'gems', amount: 50, color: '#1d4ed8', icon: '💎' },
+  { id: 8, type: 'money', amount: 500, color: '#166534', icon: '$' },
 ];
-
-const ITEM_HEIGHT = 70;
-const VISIBLE_ITEMS = 3;
-const SLOT_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
 
 const formatTime = (ms: number): string => {
   const totalSeconds = Math.floor(ms / 1000);
@@ -43,49 +39,24 @@ export default function RewardsScreen() {
   } = useGame();
   
   const [isSpinning, setIsSpinning] = useState(false);
-  const [showSpinResult, setShowSpinResult] = useState(false);
+  const [showWinPopup, setShowWinPopup] = useState(false);
   const [resultSegment, setResultSegment] = useState<typeof SLOT_ITEMS[0] | null>(null);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
-  const [showWinPopup, setShowWinPopup] = useState(false);
+  const [displayedItems, setDisplayedItems] = useState([
+    SLOT_ITEMS[0],
+    SLOT_ITEMS[1],
+    SLOT_ITEMS[2],
+  ]);
 
-  const scrollAnim = useRef(new Animated.Value(0)).current;
-  const winPopupScaleAnim = useRef(new Animated.Value(0)).current;
-  const spinResultScaleAnim = useRef(new Animated.Value(0)).current;
-  const spinGlowAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
+  useState(() => {
     const updateCooldown = () => {
       const remaining = getSpinCooldownRemaining();
       setCooldownRemaining(remaining);
     };
-
     updateCooldown();
     const interval = setInterval(updateCooldown, 1000);
     return () => clearInterval(interval);
-  }, [getSpinCooldownRemaining]);
-
-  useEffect(() => {
-    if (canSpin && !isSpinning) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(spinGlowAnim, {
-            toValue: 1,
-            duration: 1200,
-            useNativeDriver: true,
-          }),
-          Animated.timing(spinGlowAnim, {
-            toValue: 0,
-            duration: 1200,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    } else {
-      spinGlowAnim.setValue(0);
-    }
-  }, [canSpin, isSpinning, spinGlowAnim]);
-
-
+  });
 
   const handleSpin = useCallback(() => {
     if (!canSpin || isSpinning) return;
@@ -95,66 +66,51 @@ export default function RewardsScreen() {
     }
 
     setIsSpinning(true);
-    setShowSpinResult(false);
-    spinResultScaleAnim.setValue(0);
 
     const winningIndex = Math.floor(Math.random() * SLOT_ITEMS.length);
     const winningPrize = SLOT_ITEMS[winningIndex];
     
-    const totalItems = SLOT_ITEMS.length;
-    const fullSpins = 4;
+    let spinCount = 0;
+    const totalSpins = 20;
     
-    // Spinning DOWNWARD (positive translateY)
-    // The middle slot shows the winning item
-    // We need to offset by 1 item since middle is at index 1 visually
-    const targetPosition = (fullSpins * totalItems + winningIndex + 1) * ITEM_HEIGHT;
+    const spinInterval = setInterval(() => {
+      spinCount++;
+      
+      const randomTop = SLOT_ITEMS[Math.floor(Math.random() * SLOT_ITEMS.length)];
+      const randomMiddle = SLOT_ITEMS[Math.floor(Math.random() * SLOT_ITEMS.length)];
+      const randomBottom = SLOT_ITEMS[Math.floor(Math.random() * SLOT_ITEMS.length)];
+      
+      setDisplayedItems([randomTop, randomMiddle, randomBottom]);
+      
+      if (spinCount >= totalSpins) {
+        clearInterval(spinInterval);
+        
+        const topItem = SLOT_ITEMS[(winningIndex - 1 + SLOT_ITEMS.length) % SLOT_ITEMS.length];
+        const bottomItem = SLOT_ITEMS[(winningIndex + 1) % SLOT_ITEMS.length];
+        
+        setDisplayedItems([topItem, winningPrize, bottomItem]);
+        setResultSegment(winningPrize);
+        setIsSpinning(false);
 
-    scrollAnim.setValue(0);
-    
-    console.log(`Spinning to win: ${winningPrize.label} (index ${winningIndex})`);
-    
-    Animated.timing(scrollAnim, {
-      toValue: targetPosition,
-      duration: 3500,
-      useNativeDriver: true,
-    }).start(() => {
-      setResultSegment(winningPrize);
-      setIsSpinning(false);
-      setShowSpinResult(true);
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
 
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        if (winningPrize.type === 'gems') {
+          addGems(winningPrize.amount);
+        } else {
+          addMoney(winningPrize.amount);
+        }
+
+        recordSpin();
+        console.log(`Prize awarded: ${winningPrize.icon} ${winningPrize.amount}`);
+
+        setTimeout(() => {
+          setShowWinPopup(true);
+        }, 300);
       }
-
-      if (winningPrize.type === 'gems') {
-        addGems(winningPrize.amount);
-      } else {
-        addMoney(winningPrize.amount);
-      }
-
-      recordSpin();
-      console.log(`Prize awarded: ${winningPrize.label}`);
-
-      Animated.spring(spinResultScaleAnim, {
-        toValue: 1,
-        friction: 5,
-        useNativeDriver: true,
-      }).start();
-
-      setTimeout(() => {
-        setShowWinPopup(true);
-        winPopupScaleAnim.setValue(0);
-        Animated.spring(winPopupScaleAnim, {
-          toValue: 1,
-          friction: 6,
-          useNativeDriver: true,
-        }).start();
-      }, 200);
-    });
-  }, [canSpin, isSpinning, scrollAnim, spinResultScaleAnim, winPopupScaleAnim, addGems, addMoney, recordSpin]);
-
-  const reversedItems = [...SLOT_ITEMS].reverse();
-  const extendedItems = [...reversedItems, ...reversedItems, ...reversedItems, ...reversedItems, ...reversedItems, ...reversedItems];
+    }, 80);
+  }, [canSpin, isSpinning, addGems, addMoney, recordSpin]);
 
   return (
     <View style={styles.container}>
@@ -191,156 +147,117 @@ export default function RewardsScreen() {
           </View>
         )}
 
-        <View style={styles.slotSection}>
-          <View style={styles.slotMachineContainer}>
-            <Animated.View
-              style={[
-                styles.slotGlow,
-                {
-                  opacity: spinGlowAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0.2, 0.5],
-                  }),
-                },
-              ]}
-            />
-            
-            <LinearGradient
-              colors={['#1e293b', '#0f172a', '#1e293b']}
-              style={styles.slotMachineFrame}
-            >
-              <View style={styles.slotMachineTop}>
-                <Text style={styles.slotMachineTitle}>🎰 LUCKY SLOTS 🎰</Text>
+        <View style={styles.slotMachineOuter}>
+          <LinearGradient
+            colors={['#2a1810', '#1a0f0a', '#2a1810']}
+            style={styles.slotMachineBody}
+          >
+            <View style={styles.slotMachineTop}>
+              <View style={styles.casinoLightsRow}>
+                {[...Array(7)].map((_, i) => (
+                  <View key={i} style={[styles.casinoLight, { backgroundColor: i % 2 === 0 ? '#fbbf24' : '#ef4444' }]} />
+                ))}
               </View>
+              <Text style={styles.slotMachineTitle}>★ JACKPOT ★</Text>
+              <View style={styles.casinoLightsRow}>
+                {[...Array(7)].map((_, i) => (
+                  <View key={i} style={[styles.casinoLight, { backgroundColor: i % 2 === 0 ? '#ef4444' : '#fbbf24' }]} />
+                ))}
+              </View>
+            </View>
 
-              <View style={styles.slotWindowContainer}>
-                <LinearGradient
-                  colors={['rgba(0,0,0,0.8)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.8)']}
-                  style={styles.slotWindowGradient}
-                  pointerEvents="none"
-                />
-                
-                <View style={styles.slotWindow}>
-                  <Animated.View
-                    style={[
-                      styles.slotReel,
-                      {
-                        transform: [{
-                          translateY: scrollAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [0, 1],
-                          }),
-                        }],
-                      },
-                    ]}
-                  >
-                    {extendedItems.map((item, index) => (
-                      <View key={`${item.id}-${index}`} style={styles.slotItem}>
-                        <LinearGradient
-                          colors={[item.color, `${item.color}99`]}
-                          style={styles.slotItemGradient}
-                        >
-                          {item.type === 'gems' ? (
-                            <View style={styles.slotItemContent}>
-                              <Gem size={28} color="#fff" fill="#fff" />
-                              <Text style={styles.slotItemAmount}>{item.amount}</Text>
+            <View style={styles.slotWindowOuter}>
+              <LinearGradient
+                colors={['#4a3728', '#2a1810', '#4a3728']}
+                style={styles.slotWindowFrame}
+              >
+                <View style={styles.slotWindowInner}>
+                  {displayedItems.map((item, index) => (
+                    <View 
+                      key={index} 
+                      style={[
+                        styles.slotRow,
+                        index === 1 && styles.slotRowMiddle,
+                      ]}
+                    >
+                      <LinearGradient
+                        colors={index === 1 ? ['#fbbf24', '#f59e0b'] : ['#1e293b', '#0f172a']}
+                        style={styles.slotItemBg}
+                      >
+                        {item.type === 'gems' ? (
+                          <View style={styles.slotItemContent}>
+                            <Gem size={24} color={index === 1 ? '#1e293b' : '#60a5fa'} fill={index === 1 ? '#1e293b' : '#60a5fa'} />
+                            <Text style={[styles.slotItemAmount, index === 1 && styles.slotItemAmountHighlight]}>
+                              {item.amount}
+                            </Text>
+                          </View>
+                        ) : (
+                          <View style={styles.slotItemContent}>
+                            <View style={[styles.dollarCircle, index === 1 && styles.dollarCircleHighlight]}>
+                              <Text style={[styles.dollarSign, index === 1 && styles.dollarSignHighlight]}>$</Text>
                             </View>
-                          ) : (
-                            <View style={styles.slotItemContent}>
-                              <View style={styles.moneyIconSlot}>
-                                <Text style={styles.dollarIconSlot}>$</Text>
-                              </View>
-                              <Text style={styles.slotItemAmount}>{item.amount}</Text>
-                            </View>
-                          )}
-                        </LinearGradient>
-                      </View>
-                    ))}
-                  </Animated.View>
-                </View>
-
-                <View style={styles.slotPointerLeft}>
-                  <View style={styles.pointerArrowLeft} />
-                </View>
-                <View style={styles.slotPointerRight}>
-                  <View style={styles.pointerArrowRight} />
+                            <Text style={[styles.slotItemAmount, index === 1 && styles.slotItemAmountHighlight]}>
+                              {item.amount}
+                            </Text>
+                          </View>
+                        )}
+                      </LinearGradient>
+                    </View>
+                  ))}
                 </View>
                 
-                <View style={styles.winLine} />
-              </View>
+                <View style={styles.winIndicatorLeft}>
+                  <View style={styles.arrowRight} />
+                </View>
+                <View style={styles.winIndicatorRight}>
+                  <View style={styles.arrowLeft} />
+                </View>
+              </LinearGradient>
+            </View>
 
-              <View style={styles.slotDecorations}>
-                <View style={styles.slotLight} />
-                <View style={styles.slotLight} />
-                <View style={styles.slotLight} />
+            <View style={styles.slotMachineBottom}>
+              <View style={styles.coinSlot} />
+              <View style={styles.decorativePlate}>
+                <Text style={styles.decorativeText}>777</Text>
               </View>
-            </LinearGradient>
-          </View>
+              <View style={styles.coinSlot} />
+            </View>
+          </LinearGradient>
         </View>
 
         <TouchableOpacity
-          style={[styles.spinButton, (!canSpin || isSpinning) && styles.spinButtonDisabled]}
+          style={[styles.spinLever, (!canSpin || isSpinning) && styles.spinLeverDisabled]}
           onPress={handleSpin}
           activeOpacity={0.8}
           disabled={!canSpin || isSpinning}
         >
           <LinearGradient
-            colors={canSpin && !isSpinning ? ['#fbbf24', '#f59e0b'] : ['#475569', '#374151']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.spinButtonGradient}
+            colors={canSpin && !isSpinning ? ['#dc2626', '#991b1b'] : ['#475569', '#374151']}
+            style={styles.spinLeverGradient}
           >
-            <Sparkles size={22} color={canSpin && !isSpinning ? '#000' : '#9ca3af'} />
-            <Text style={[styles.spinButtonText, (!canSpin || isSpinning) && styles.spinButtonTextDisabled]}>
-              {isSpinning ? 'SPINNING...' : canSpin ? 'SPIN NOW!' : 'COOLDOWN'}
+            <Trophy size={22} color="#fff" />
+            <Text style={styles.spinLeverText}>
+              {isSpinning ? 'SPINNING...' : canSpin ? 'PULL TO SPIN!' : 'COOLDOWN'}
             </Text>
           </LinearGradient>
         </TouchableOpacity>
 
-        {showSpinResult && resultSegment && (
-          <Animated.View
-            style={[
-              styles.spinResultContainer,
-              { transform: [{ scale: spinResultScaleAnim }] },
-            ]}
-          >
-            <LinearGradient
-              colors={['#1e293b', '#0f172a']}
-              style={styles.spinResultGradient}
-            >
-              <Text style={styles.spinResultTitle}>You Won!</Text>
-              <View style={styles.spinResultContent}>
-                {resultSegment.type === 'gems' ? (
-                  <>
-                    <Gem size={28} color="#60a5fa" fill="#60a5fa" />
-                    <Text style={styles.spinResultAmount}>+{resultSegment.amount}</Text>
-                  </>
-                ) : (
-                  <>
-                    <View style={styles.moneyIconLarge}>
-                      <Text style={styles.dollarIconLarge}>$</Text>
-                    </View>
-                    <Text style={styles.spinResultAmountGreen}>+${resultSegment.amount}</Text>
-                  </>
-                )}
-              </View>
-            </LinearGradient>
-          </Animated.View>
-        )}
-
         <View style={styles.prizesInfo}>
           <Text style={styles.prizesTitle}>Possible Prizes</Text>
           <View style={styles.prizesGrid}>
-            {SLOT_ITEMS.map((segment) => (
-              <View key={segment.id} style={[styles.prizeItem, { borderColor: segment.color }]}>
-                {segment.type === 'gems' ? (
-                  <Gem size={12} color="#60a5fa" fill="#60a5fa" />
+            {SLOT_ITEMS.map((item) => (
+              <View key={item.id} style={styles.prizeItem}>
+                {item.type === 'gems' ? (
+                  <>
+                    <Gem size={14} color="#60a5fa" fill="#60a5fa" />
+                    <Text style={styles.prizeTextBlue}>{item.amount}</Text>
+                  </>
                 ) : (
-                  <Text style={styles.prizeMoneyIcon}>$</Text>
+                  <>
+                    <Text style={styles.prizeMoneyIcon}>$</Text>
+                    <Text style={styles.prizeTextGreen}>{item.amount}</Text>
+                  </>
                 )}
-                <Text style={styles.prizeText}>
-                  {segment.type === 'gems' ? segment.amount : segment.amount}
-                </Text>
               </View>
             ))}
           </View>
@@ -435,26 +352,21 @@ export default function RewardsScreen() {
           onPress={() => setShowWinPopup(false)}
         >
           <Pressable onPress={(e) => e.stopPropagation()}>
-            <Animated.View
-              style={[
-                styles.winModalContent,
-                { transform: [{ scale: winPopupScaleAnim }] },
-              ]}
-            >
+            <View style={styles.winModalContent}>
               <LinearGradient
                 colors={['#1e293b', '#0f172a']}
                 style={styles.winModalGradient}
               >
                 <View style={styles.winModalHeader}>
                   <Text style={styles.winModalEmoji}>🎉</Text>
-                  <Text style={styles.winModalTitle}>You Won!</Text>
+                  <Text style={styles.winModalTitle}>WINNER!</Text>
                 </View>
                 
                 {resultSegment && (
                   <View style={styles.winModalPrize}>
                     {resultSegment.type === 'gems' ? (
                       <>
-                        <Gem size={36} color="#60a5fa" fill="#60a5fa" />
+                        <Gem size={48} color="#60a5fa" fill="#60a5fa" />
                         <Text style={styles.winModalAmount}>+{resultSegment.amount}</Text>
                         <Text style={styles.winModalLabel}>Diamonds</Text>
                       </>
@@ -478,7 +390,7 @@ export default function RewardsScreen() {
                   <Text style={styles.awesomeButtonText}>AWESOME!</Text>
                 </TouchableOpacity>
               </LinearGradient>
-            </Animated.View>
+            </View>
           </Pressable>
         </Pressable>
       </Modal>
@@ -552,253 +464,206 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     color: '#94a3b8',
   },
-  slotSection: {
+  slotMachineOuter: {
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
+    marginVertical: 12,
   },
-  slotMachineContainer: {
-    width: SCREEN_WIDTH - 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  slotGlow: {
-    position: 'absolute',
-    width: SCREEN_WIDTH - 40,
-    height: 320,
+  slotMachineBody: {
+    width: SCREEN_WIDTH - 48,
     borderRadius: 20,
-    backgroundColor: '#fbbf24',
-  },
-  slotMachineFrame: {
-    width: '100%',
-    borderRadius: 16,
     padding: 16,
-    borderWidth: 3,
-    borderColor: '#fbbf24',
+    borderWidth: 4,
+    borderColor: '#8b6914',
     shadowColor: '#fbbf24',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 10,
+    shadowOpacity: 0.4,
+    shadowRadius: 15,
+    elevation: 12,
   },
   slotMachineTop: {
     alignItems: 'center',
     marginBottom: 12,
   },
+  casinoLightsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginVertical: 4,
+  },
+  casinoLight: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+  },
   slotMachineTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '900' as const,
     color: '#fbbf24',
-    letterSpacing: 2,
+    letterSpacing: 3,
+    textShadowColor: '#fbbf24',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+    marginVertical: 8,
   },
-  slotWindowContainer: {
-    height: SLOT_HEIGHT,
-    backgroundColor: '#0a0a0f',
+  slotWindowOuter: {
     borderRadius: 12,
     overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#374151',
+  },
+  slotWindowFrame: {
+    padding: 8,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#8b6914',
     position: 'relative',
   },
-  slotWindowGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 10,
-  },
-  slotWindow: {
-    height: SLOT_HEIGHT,
+  slotWindowInner: {
+    backgroundColor: '#0a0a0f',
+    borderRadius: 8,
     overflow: 'hidden',
   },
-  slotReel: {
-    paddingTop: ITEM_HEIGHT,
+  slotRow: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
   },
-  slotItem: {
-    height: ITEM_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'center',
+  slotRowMiddle: {
+    borderBottomWidth: 0,
+  },
+  slotItemBg: {
+    paddingVertical: 12,
     paddingHorizontal: 16,
-  },
-  slotItemGradient: {
-    width: '100%',
-    height: ITEM_HEIGHT - 8,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 8,
   },
   slotItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 12,
   },
   slotItemAmount: {
-    fontSize: 28,
-    fontWeight: '900' as const,
-    color: '#fff',
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
-  },
-  moneyIconSlot: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dollarIconSlot: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '900' as const,
     color: '#fff',
   },
-  slotPointerLeft: {
-    position: 'absolute',
-    left: -2,
-    top: '50%',
-    marginTop: -12,
-    zIndex: 20,
+  slotItemAmountHighlight: {
+    color: '#1e293b',
   },
-  pointerArrowLeft: {
-    width: 0,
-    height: 0,
-    borderTopWidth: 12,
-    borderBottomWidth: 12,
-    borderLeftWidth: 16,
-    borderTopColor: 'transparent',
-    borderBottomColor: 'transparent',
-    borderLeftColor: '#fbbf24',
-  },
-  slotPointerRight: {
-    position: 'absolute',
-    right: -2,
-    top: '50%',
-    marginTop: -12,
-    zIndex: 20,
-  },
-  pointerArrowRight: {
-    width: 0,
-    height: 0,
-    borderTopWidth: 12,
-    borderBottomWidth: 12,
-    borderRightWidth: 16,
-    borderTopColor: 'transparent',
-    borderBottomColor: 'transparent',
-    borderRightColor: '#fbbf24',
-  },
-  winLine: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-    top: '50%',
-    marginTop: -1,
-    height: 2,
-    backgroundColor: '#fbbf24',
-    zIndex: 15,
-    opacity: 0.6,
-  },
-  slotDecorations: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-    marginTop: 12,
-  },
-  slotLight: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#fbbf24',
-    shadowColor: '#fbbf24',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
-  },
-  spinButton: {
-    marginTop: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  spinButtonDisabled: {
-    opacity: 0.7,
-  },
-  spinButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 14,
-  },
-  spinButtonText: {
-    fontSize: 16,
-    fontWeight: '900' as const,
-    color: '#000',
-    letterSpacing: 1,
-  },
-  spinButtonTextDisabled: {
-    color: '#9ca3af',
-  },
-  spinResultContainer: {
-    marginTop: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  spinResultGradient: {
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(251, 191, 36, 0.4)',
-    borderRadius: 12,
-  },
-  spinResultTitle: {
-    fontSize: 18,
-    fontWeight: '800' as const,
-    color: '#fbbf24',
-    marginBottom: 8,
-  },
-  spinResultContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  spinResultAmount: {
-    fontSize: 28,
-    fontWeight: '900' as const,
-    color: '#60a5fa',
-  },
-  spinResultAmountGreen: {
-    fontSize: 28,
-    fontWeight: '900' as const,
-    color: '#22c55e',
-  },
-  moneyIconLarge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+  dollarCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#22c55e',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  dollarIconLarge: {
-    fontSize: 12,
-    fontWeight: '800' as const,
+  dollarCircleHighlight: {
+    backgroundColor: '#1e293b',
+  },
+  dollarSign: {
+    fontSize: 16,
+    fontWeight: '900' as const,
     color: '#fff',
   },
-  prizesInfo: {
+  dollarSignHighlight: {
+    color: '#22c55e',
+  },
+  winIndicatorLeft: {
+    position: 'absolute',
+    left: 0,
+    top: '50%',
+    marginTop: -10,
+  },
+  winIndicatorRight: {
+    position: 'absolute',
+    right: 0,
+    top: '50%',
+    marginTop: -10,
+  },
+  arrowRight: {
+    width: 0,
+    height: 0,
+    borderTopWidth: 10,
+    borderBottomWidth: 10,
+    borderLeftWidth: 14,
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    borderLeftColor: '#fbbf24',
+  },
+  arrowLeft: {
+    width: 0,
+    height: 0,
+    borderTopWidth: 10,
+    borderBottomWidth: 10,
+    borderRightWidth: 14,
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    borderRightColor: '#fbbf24',
+  },
+  slotMachineBottom: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingHorizontal: 20,
+  },
+  coinSlot: {
+    width: 30,
+    height: 6,
+    backgroundColor: '#1a0f0a',
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: '#8b6914',
+  },
+  decorativePlate: {
+    backgroundColor: '#8b6914',
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  decorativeText: {
+    fontSize: 16,
+    fontWeight: '900' as const,
+    color: '#fbbf24',
+    letterSpacing: 2,
+  },
+  spinLever: {
     marginTop: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  spinLeverDisabled: {
+    opacity: 0.7,
+  },
+  spinLeverGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 16,
+  },
+  spinLeverText: {
+    fontSize: 18,
+    fontWeight: '900' as const,
+    color: '#fff',
+    letterSpacing: 1,
+  },
+  prizesInfo: {
+    marginTop: 20,
     backgroundColor: 'rgba(30, 41, 59, 0.6)',
     borderRadius: 12,
-    padding: 12,
+    padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(251, 191, 36, 0.2)',
+    borderColor: 'rgba(139, 105, 20, 0.4)',
   },
   prizesTitle: {
     fontSize: 14,
     fontWeight: '700' as const,
     color: '#fbbf24',
-    marginBottom: 10,
-    textAlign: 'center',
+    marginBottom: 12,
+    textAlign: 'center' as const,
   },
   prizesGrid: {
     flexDirection: 'row',
@@ -811,20 +676,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     backgroundColor: 'rgba(15, 23, 42, 0.8)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 8,
-    borderWidth: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 105, 20, 0.3)',
   },
   prizeMoneyIcon: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '800' as const,
     color: '#22c55e',
   },
-  prizeText: {
-    fontSize: 12,
+  prizeTextBlue: {
+    fontSize: 13,
     fontWeight: '700' as const,
-    color: '#fff',
+    color: '#60a5fa',
+  },
+  prizeTextGreen: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: '#22c55e',
   },
   footerSpace: {
     height: 20,
@@ -850,36 +721,33 @@ const styles = StyleSheet.create({
   },
   winModalHeader: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   winModalEmoji: {
     fontSize: 56,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   winModalTitle: {
     fontSize: 32,
     fontWeight: '900' as const,
     color: '#fbbf24',
-    letterSpacing: 2,
-    textShadowColor: 'rgba(251, 191, 36, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
+    letterSpacing: 3,
   },
   winModalPrize: {
     alignItems: 'center',
     marginBottom: 24,
   },
   winModalAmount: {
-    fontSize: 36,
+    fontSize: 40,
     fontWeight: '900' as const,
     color: '#60a5fa',
-    marginTop: 8,
+    marginTop: 12,
   },
   winModalAmountGreen: {
-    fontSize: 36,
+    fontSize: 40,
     fontWeight: '900' as const,
     color: '#22c55e',
-    marginTop: 8,
+    marginTop: 12,
   },
   winModalLabel: {
     fontSize: 14,
@@ -888,15 +756,15 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   winMoneyIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#22c55e',
     justifyContent: 'center',
     alignItems: 'center',
   },
   winDollarIcon: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '900' as const,
     color: '#fff',
   },
@@ -905,11 +773,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 56,
     paddingVertical: 16,
     borderRadius: 14,
-    shadowColor: '#22c55e',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 8,
   },
   awesomeButtonText: {
     fontSize: 18,
@@ -918,7 +781,7 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   socialSection: {
-    marginTop: 16,
+    marginTop: 20,
     backgroundColor: 'rgba(30, 41, 59, 0.6)',
     borderRadius: 14,
     padding: 14,

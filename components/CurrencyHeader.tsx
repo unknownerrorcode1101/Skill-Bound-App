@@ -43,7 +43,7 @@ interface CurrencyHeaderProps {
 }
 
 export default function CurrencyHeader({ showDivider = true }: CurrencyHeaderProps) {
-  const { gems, money, level, xpProgress, xpBarColors } = useGame();
+  const { gems, money, level, xpProgress, xpBarColors, xpBadgeColors } = useGame();
   
   const [showMoneyTooltip, setShowMoneyTooltip] = useState(false);
   const [showGemsTooltip, setShowGemsTooltip] = useState(false);
@@ -65,7 +65,7 @@ export default function CurrencyHeader({ showDivider = true }: CurrencyHeaderPro
             </LinearGradient>
             <View style={styles.levelBadgeOverlay}>
               <LinearGradient
-                colors={['#8b5cf6', '#7c3aed']}
+                colors={[xpBadgeColors[0], xpBadgeColors[1]]}
                 style={styles.levelBadgeSmall}
               >
                 <Text style={styles.levelNumberSmall}>{level}</Text>

@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView, Dimensions, Modal, Pressable } from 'react-native';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gem, Crown, Plus } from 'lucide-react-native';
@@ -45,32 +45,12 @@ const formatGemsFull = (amount: number): string => {
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { gems, money, level, xpProgress, xpBarColors } = useGame();
+  const { gems, money, level, xpProgress, xpBarColors, xpBadgeColors } = useGame();
   
   const [showMoneyTooltip, setShowMoneyTooltip] = useState(false);
   const [showGemsTooltip, setShowGemsTooltip] = useState(false);
   
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const titleScaleAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    const breatheAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(titleScaleAnim, {
-          toValue: 1.03,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(titleScaleAnim, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    breatheAnimation.start();
-    return () => breatheAnimation.stop();
-  }, [titleScaleAnim]);
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
@@ -121,7 +101,7 @@ export default function HomeScreen() {
             </LinearGradient>
             <View style={styles.levelBadgeOverlay}>
               <LinearGradient
-                colors={['#8b5cf6', '#7c3aed']}
+                colors={[xpBadgeColors[0], xpBadgeColors[1]]}
                 style={styles.levelBadgeSmall}
               >
                 <Text style={styles.levelNumberSmall}>{level}</Text>
@@ -222,7 +202,7 @@ export default function HomeScreen() {
 
       </View>
 
-      <Animated.View style={[styles.logoContainer, { transform: [{ scale: titleScaleAnim }] }]}>
+      <View style={styles.logoContainer}>
         <View style={styles.logoWrapper}>
           <Text style={styles.logoText}>SKILL</Text>
           <View style={styles.logoBolt}>
@@ -230,7 +210,7 @@ export default function HomeScreen() {
           </View>
         </View>
         <Text style={styles.logoSubtext}>BOUND</Text>
-      </Animated.View>
+      </View>
 
       <View style={styles.sectionDivider}>
         <View style={styles.dividerLine} />
