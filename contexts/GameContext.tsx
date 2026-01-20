@@ -343,6 +343,34 @@ export const [GameProvider, useGame] = createContextHook(() => {
     });
   }, []);
 
+  const devResetDailyReward = useCallback(() => {
+    setLastDailyClaim(null);
+    setDailyStreak(0);
+    AsyncStorage.removeItem(LAST_DAILY_CLAIM_KEY).catch(error => {
+      console.log('Error resetting daily claim:', error);
+    });
+    AsyncStorage.removeItem(DAILY_STREAK_KEY).catch(error => {
+      console.log('Error resetting streak:', error);
+    });
+    AsyncStorage.removeItem('last_daily_claim_time').catch(error => {
+      console.log('Error resetting daily timer:', error);
+    });
+  }, []);
+
+  const devAdvanceDailyReward = useCallback(() => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayISO = yesterday.toISOString();
+    
+    setLastDailyClaim(yesterdayISO);
+    AsyncStorage.setItem(LAST_DAILY_CLAIM_KEY, JSON.stringify(yesterdayISO)).catch(error => {
+      console.log('Error advancing daily claim:', error);
+    });
+    AsyncStorage.removeItem('last_daily_claim_time').catch(error => {
+      console.log('Error resetting daily timer:', error);
+    });
+  }, []);
+
   const canClaimDaily = useCallback(() => {
     if (!lastDailyClaim) return true;
     const lastDate = new Date(lastDailyClaim).toDateString();
@@ -496,5 +524,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     getAdsRemaining,
     giftButtonPosition,
     setGiftButtonPosition,
+    devResetDailyReward,
+    devAdvanceDailyReward,
   };
 });

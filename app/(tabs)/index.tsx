@@ -45,7 +45,7 @@ const formatGemsFull = (amount: number): string => {
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { gems, money, level, xpProgress, xpBarColors, xpBadgeColors } = useGame();
+  const { gems, money, level, xpProgress, xpBarColors, xpBadgeColors, username } = useGame();
   
   const [showMoneyTooltip, setShowMoneyTooltip] = useState(false);
   const [showGemsTooltip, setShowGemsTooltip] = useState(false);
@@ -109,6 +109,7 @@ export default function HomeScreen() {
             </View>
           </View>
           <View style={styles.xpBarVertical}>
+            <Text style={styles.usernameLabel} numberOfLines={1}>{username}</Text>
             <View style={styles.progressBarBgSmall}>
               <LinearGradient
                 colors={[xpBarColors[0], xpBarColors[1]]}
@@ -118,7 +119,6 @@ export default function HomeScreen() {
               />
               <View style={styles.xpBarShimmer} />
             </View>
-            <Text style={styles.xpLabel}>Lv.{level} • {xpProgress}%</Text>
           </View>
         </TouchableOpacity>
 
@@ -493,8 +493,14 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   xpBarVertical: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 2,
+  },
+  usernameLabel: {
+    fontSize: 10,
+    fontWeight: '700' as const,
+    color: '#fff',
+    maxWidth: 50,
   },
   progressBarBgSmall: {
     width: 48,
@@ -522,11 +528,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 4,
     borderTopRightRadius: 4,
   },
-  xpLabel: {
-    fontSize: 8,
-    fontWeight: '700' as const,
-    color: '#c4b5fd',
-  },
+  
   currencyRow: {
     flex: 1,
     flexDirection: 'row',
