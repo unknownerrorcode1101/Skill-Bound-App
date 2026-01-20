@@ -23,8 +23,12 @@ const SLOT_ITEMS = [
 
 const formatTime = (ms: number): string => {
   const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
@@ -35,7 +39,8 @@ export default function RewardsScreen() {
     addMoney, 
     canSpin,
     getSpinCooldownRemaining,
-    recordSpin
+    recordSpin,
+    devResetSpinCooldown,
   } = useGame();
   
   const [isSpinning, setIsSpinning] = useState(false);
@@ -145,6 +150,20 @@ export default function RewardsScreen() {
             <Clock size={16} color="#94a3b8" />
             <Text style={styles.cooldownText}>Next spin in {formatTime(cooldownRemaining)}</Text>
           </View>
+        )}
+
+        {/* DEV TESTING ONLY - Remove before production */}
+        {!canSpin && (
+          <TouchableOpacity
+            style={styles.devSpinButton}
+            onPress={() => {
+              devResetSpinCooldown();
+              console.log('[DEV] Spin cooldown reset');
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.devSpinButtonText}>⚠️ DEV: SPIN NOW</Text>
+          </TouchableOpacity>
         )}
 
         <View style={styles.slotMachineOuter}>
@@ -699,6 +718,21 @@ const styles = StyleSheet.create({
   },
   footerSpace: {
     height: 20,
+  },
+  devSpinButton: {
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    borderWidth: 1,
+    borderColor: '#ef4444',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignSelf: 'center',
+    marginBottom: 8,
+  },
+  devSpinButtonText: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+    color: '#ef4444',
   },
   winModalOverlay: {
     flex: 1,

@@ -51,7 +51,7 @@ export default function TabLayout() {
           title: "STATS",
           tabBarIcon: ({ color, focused }) => (
             <TabIconWrapper color={color} focused={focused}>
-              <BarChart3 color={focused ? '#60a5fa' : color} size={20} strokeWidth={2.5} />
+              <BarChart3 color={focused ? '#06b6d4' : color} size={20} strokeWidth={2.5} />
             </TabIconWrapper>
           ),
         }}

@@ -336,6 +336,13 @@ export const [GameProvider, useGame] = createContextHook(() => {
     });
   }, []);
 
+  const devResetSpinCooldown = useCallback(() => {
+    setLastSpinTime(null);
+    AsyncStorage.removeItem(LAST_SPIN_KEY).catch(error => {
+      console.log('Error resetting spin cooldown:', error);
+    });
+  }, []);
+
   const canClaimDaily = useCallback(() => {
     if (!lastDailyClaim) return true;
     const lastDate = new Date(lastDailyClaim).toDateString();
@@ -478,6 +485,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     canSpin,
     getSpinCooldownRemaining,
     recordSpin,
+    devResetSpinCooldown,
     lastSpinTime,
     canClaimDaily,
     claimDailyReward,

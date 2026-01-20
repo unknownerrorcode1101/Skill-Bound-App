@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Pressable, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Modal, Image } from 'react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
 import { Gem, Crown, Plus } from 'lucide-react-native';
@@ -43,7 +43,7 @@ interface CurrencyHeaderProps {
 }
 
 export default function CurrencyHeader({ showDivider = true }: CurrencyHeaderProps) {
-  const { gems, money, level, xpProgress, xpBarColors, xpBadgeColors } = useGame();
+  const { gems, money, level, xpProgress, xpBarColors, xpBadgeColors, profilePicture, username } = useGame();
   
   const [showMoneyTooltip, setShowMoneyTooltip] = useState(false);
   const [showGemsTooltip, setShowGemsTooltip] = useState(false);
@@ -57,12 +57,16 @@ export default function CurrencyHeader({ showDivider = true }: CurrencyHeaderPro
           activeOpacity={0.8}
         >
           <View style={styles.avatarWithXp}>
-            <LinearGradient
-              colors={['#3b82f6', '#2563eb']}
-              style={styles.avatarSmall}
-            >
-              <Crown size={16} color="#fbbf24" fill="#fbbf24" />
-            </LinearGradient>
+            {profilePicture ? (
+              <Image source={{ uri: profilePicture }} style={styles.avatarImageSmall} />
+            ) : (
+              <LinearGradient
+                colors={['#3b82f6', '#2563eb']}
+                style={styles.avatarSmall}
+              >
+                <Crown size={16} color="#fbbf24" fill="#fbbf24" />
+              </LinearGradient>
+            )}
             <View style={styles.levelBadgeOverlay}>
               <LinearGradient
                 colors={[xpBadgeColors[0], xpBadgeColors[1]]}
@@ -73,6 +77,7 @@ export default function CurrencyHeader({ showDivider = true }: CurrencyHeaderPro
             </View>
           </View>
           <View style={styles.xpBarVertical}>
+            <Text style={styles.usernameLabel} numberOfLines={1}>{username}</Text>
             <View style={styles.progressBarBgSmall}>
               <LinearGradient
                 colors={[xpBarColors[0], xpBarColors[1]]}
@@ -82,7 +87,6 @@ export default function CurrencyHeader({ showDivider = true }: CurrencyHeaderPro
               />
               <View style={styles.xpBarShimmer} />
             </View>
-            <Text style={styles.xpLabel}>Lv.{level} • {xpProgress}%</Text>
           </View>
         </TouchableOpacity>
 
@@ -197,6 +201,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#60a5fa',
   },
+  avatarImageSmall: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#60a5fa',
+  },
   levelBadgeOverlay: {
     position: 'absolute',
     bottom: -4,
@@ -217,8 +228,14 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   xpBarVertical: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 2,
+  },
+  usernameLabel: {
+    fontSize: 10,
+    fontWeight: '700' as const,
+    color: '#fff',
+    maxWidth: 50,
   },
   progressBarBgSmall: {
     width: 48,
@@ -246,11 +263,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 4,
     borderTopRightRadius: 4,
   },
-  xpLabel: {
-    fontSize: 8,
-    fontWeight: '700' as const,
-    color: '#c4b5fd',
-  },
+  
   currencyRow: {
     flex: 1,
     flexDirection: 'row',

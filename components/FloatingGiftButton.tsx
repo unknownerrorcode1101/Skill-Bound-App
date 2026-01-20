@@ -457,8 +457,7 @@ export default function FloatingGiftButton({ bottomOffset = 90 }: FloatingGiftBu
                         <Text style={styles.rewardPopupAmountGreen}>+{rewardMoney}</Text>
                       </View>
                     </View>
-                    <Animated.View style={{ transform: [{ scale: buttonPulseAnim }] }}>
-                      <TouchableOpacity
+                    <TouchableOpacity
                         style={styles.closeRewardButton}
                         onPress={() => {
                           setShowDailyReward(false);
@@ -467,7 +466,6 @@ export default function FloatingGiftButton({ bottomOffset = 90 }: FloatingGiftBu
                       >
                         <Text style={styles.closeRewardButtonText}>AWESOME!</Text>
                       </TouchableOpacity>
-                    </Animated.View>
                   </LinearGradient>
                 </Animated.View>
               )}
