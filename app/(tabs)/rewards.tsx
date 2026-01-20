@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform, ScrollView, Modal, Pressable } from 'react-native';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gem, Clock, Sparkles, Star, ExternalLink, Trophy } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -53,7 +53,7 @@ export default function RewardsScreen() {
     SLOT_ITEMS[2],
   ]);
 
-  useState(() => {
+  useEffect(() => {
     const updateCooldown = () => {
       const remaining = getSpinCooldownRemaining();
       setCooldownRemaining(remaining);
@@ -61,7 +61,7 @@ export default function RewardsScreen() {
     updateCooldown();
     const interval = setInterval(updateCooldown, 1000);
     return () => clearInterval(interval);
-  });
+  }, [getSpinCooldownRemaining]);
 
   const handleSpin = useCallback(() => {
     if (!canSpin || isSpinning) return;
